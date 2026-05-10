@@ -1,5 +1,6 @@
 import { Geist } from "next/font/google";
 import "./globals.css";
+import { LanguageProvider } from "@/lib/LanguageContext";
 
 const geist = Geist({ subsets: ["latin"] });
 
@@ -22,7 +23,11 @@ export default function RootLayout({ children }) {
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-title" content="Govi Nena" />
       </head>
-      <body className={geist.className}>{children}</body>
+      <body className={geist.className}>
+        <LanguageProvider>
+          {children}
+        </LanguageProvider>
+      </body>
     </html>
   );
 }
