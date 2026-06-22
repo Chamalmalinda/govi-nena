@@ -47,8 +47,8 @@ export default function HomePage() {
             </div>
             <div>
               <p className="text-lg opacity-90">{lang === 'si' ? 'ආයුබෝවන්' : 'Welcome'}</p>
-              <p className="text-xl font-semibold">කමල් පෙරේරා</p>
-              <p className="text-sm opacity-70">ගම්පහ</p>
+              <p className="text-xl font-semibold"></p>
+              <p className="text-sm opacity-70"></p>
             </div>
           </div>
           <div className="flex items-center gap-2">
