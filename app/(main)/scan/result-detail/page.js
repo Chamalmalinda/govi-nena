@@ -39,6 +39,7 @@ function ResultDetailContent() {
   const diseaseName = searchParams.get('disease') || '';
   const confidence = searchParams.get('confidence') || '0';
   const crop = searchParams.get('crop') || '';
+  const isUncertain = searchParams.get('isUncertain') === 'true';
 
   const [image, setImage] = useState('');
   const [treatment, setTreatment] = useState(null);
@@ -83,7 +84,7 @@ function ResultDetailContent() {
 
   const treatmentSteps = treatment ? [
     t.detail_step1,
-    treatment.chemical,
+    isUncertain ? (lang === 'si' ? 'අවිනිශ්චිත ස්කෑන් පරීක්ෂණ සඳහා රසායනික ප්‍රතිකාර නිර්දේශ නොකෙරේ. කරුණාකර නැවත ස්කෑන් කරන්න.' : 'Chemical recommendations are withheld for uncertain scans. Please scan again.') : treatment.chemical,
     treatment.organic,
     t.detail_step4,
   ] : [];
@@ -144,6 +145,37 @@ function ResultDetailContent() {
 
       {/* Content */}
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: 'clamp(24px, 4vw, 48px) clamp(16px, 5vw, 60px)', display: 'flex', flexDirection: 'column', gap: 'clamp(20px, 3vw, 32px)' }}>
+
+        {isUncertain && (
+          <div style={{
+            background: '#FFFDE7',
+            border: '1.5px solid #FBC02D',
+            borderRadius: 'clamp(20px, 2.5vw, 32px)',
+            padding: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '16px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+          }}>
+            <div style={{
+              width: '48px', height: '48px', borderRadius: '50%', background: '#FFF9C4',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
+            }}>
+              <span style={{ fontSize: '24px' }}>⚠️</span>
+            </div>
+            <div>
+              <h4 style={{ color: '#F57F17', margin: '0 0 4px 0', fontSize: 'clamp(14px, 1.2vw, 18px)', fontWeight: '700' }}>
+                {lang === 'si' ? 'අවිනිශ්චිත ස්කෑන් පරීක්ෂණයකි' : 'Uncertain Scan Result'}
+              </h4>
+              <p style={{ color: '#5D4037', margin: 0, fontSize: 'clamp(12px, 1vw, 15px)', lineHeight: '1.4' }}>
+                {lang === 'si' 
+                  ? `මෙම රෝග විනිශ්චය 30% - 59% අතර අවිනිශ්චිත මට්ටමක පවතී. නිවැරදි රසායනික ප්‍රතිකාර භාවිතයට පෙර, වඩාත් හොඳ ආලෝකයකින් පත්‍රය ලඟට කර නැවත ස්කෑන් කිරීමට කාරුණික වන්න.` 
+                  : `This match is uncertain (30% - 59% confidence). Before applying chemical treatments, please scan again closer to the leaf under better lighting.`
+                }
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Symptoms */}
         <div style={{ background: '#fff', borderRadius: 'clamp(20px, 2.5vw, 32px)', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', padding: 'clamp(20px, 3vw, 40px)' }}>
