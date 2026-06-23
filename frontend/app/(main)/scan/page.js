@@ -98,6 +98,7 @@ function ScanContent() {
   const [predicting, setPredicting] = useState(false);
   const [result, setResult] = useState(null);
   const [treatment, setTreatment] = useState(null);
+  const [scanCoords, setScanCoords] = useState(null);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
@@ -120,6 +121,7 @@ function ScanContent() {
 
     try {
       const coords = await getCoords();
+      setScanCoords(coords);
       const token = localStorage.getItem('govi_nena_token');
       await fetch('http://localhost:5000/api/outbreaks', {
         method: 'POST',
@@ -347,6 +349,7 @@ function ScanContent() {
       confidence: String(result.confidence),
       crop: selectedCrop || '',
       isUncertain: String(!!result.isUncertain),
+      ...(scanCoords ? { lat: String(scanCoords[1]), lng: String(scanCoords[0]) } : {})
     });
     router.push(`/scan/result-detail?${params.toString()}`);
   };

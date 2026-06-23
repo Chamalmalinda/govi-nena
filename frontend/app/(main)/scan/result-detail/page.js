@@ -40,21 +40,43 @@ function ResultDetailContent() {
   const confidence = searchParams.get('confidence') || '0';
   const crop = searchParams.get('crop') || '';
   const isUncertain = searchParams.get('isUncertain') === 'true';
+  const lat = searchParams.get('lat');
+  const lng = searchParams.get('lng');
 
   const [image, setImage] = useState('');
   const [treatment, setTreatment] = useState(null);
+  const [weather, setWeather] = useState(null);
 
-  // Image localStorage හරහා ගන්නවා
+  // Restore captured scan image
   useEffect(() => {
     const stored = localStorage.getItem('govi_nena_last_scan_image');
     if (stored) setImage(stored);
   }, []);
 
-  // lang change වුනාම treatment re-fetch කරනවා
+  // Fetch offline treatment description
   useEffect(() => {
     if (!crop || !diseaseName) return;
     getTreatmentOffline(crop, diseaseName, lang).then(data => setTreatment(data));
   }, [crop, diseaseName, lang]);
+
+  // Fetch actual weather using coords
+  useEffect(() => {
+    const fetchWeather = async () => {
+      const queryLat = lat || '6.9271'; // default Colombo fallback
+      const queryLng = lng || '79.8612';
+      try {
+        const res = await fetch(`http://localhost:5000/api/weather?lat=${queryLat}&lng=${queryLng}`);
+        if (res.ok) {
+          const data = await res.json();
+          setWeather(data);
+        }
+      } catch (err) {
+        console.error('Weather detail fetch error:', err);
+      }
+    };
+
+    fetchWeather();
+  }, [lat, lng]);
 
   const handleShare = () => {
     if (navigator.share && treatment) {
@@ -67,9 +89,10 @@ function ResultDetailContent() {
   };
 
   const envFactors = [
-    { icon: '🌡️', label: 'Temperature', value: '28-32°C', status: t.detail_favorable, color: '#4CAF50' },
-    { icon: '💧', label: 'Humidity', value: '75-85%', status: t.detail_high_risk, color: '#E65100' },
-    { icon: '💨', label: 'Wind', value: t.detail_moderate, status: t.detail_normal, color: '#1565C0' },
+    { icon: '🌡️', label: 'Temperature', value: weather ? weather.temperature : '...', status: t.detail_favorable, color: '#4CAF50' },
+    { icon: '💧', label: 'Humidity', value: weather ? weather.humidity : '...', status: t.detail_high_risk, color: '#E65100' },
+    { icon: '💨', label: 'Wind', value: weather ? weather.windSpeed : '...', status: t.detail_normal, color: '#1565C0' },
+    { icon: '📍', label: lang === 'si' ? 'ස්ථානය' : 'Location', value: weather ? weather.locationName : '...', status: 'GPS Active', color: '#2E7D32' },
     { icon: '📅', label: t.detail_season, value: 'Yala', status: 'Apr - Sep', color: '#795548' },
   ];
 
