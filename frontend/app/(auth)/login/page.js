@@ -1,66 +1,100 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useLang } from '@/lib/LanguageContext';
 
-export default function LoginPage() {
+function LoginContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { t, lang, toggleLang } = useLang();
+  
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [loginError, setLoginError] = useState('');
 
-  const handleSubmit = (e) => {
+  const registered = searchParams.get('registered') === 'true';
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoginError('');
     setLoading(true);
-    setTimeout(() => setLoading(false), 1000);
+
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ phone, password })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Save session credentials
+        localStorage.setItem('govi_nena_token', data.token);
+        localStorage.setItem('govi_nena_user', JSON.stringify(data.user));
+        
+        // Redirect to homepage
+        router.push('/home');
+      } else {
+        setLoginError(data.message || (lang === 'si' ? 'දුරකථන අංකය හෝ මුරපදය වැරදියි' : 'Invalid phone number or password'));
+      }
+    } catch (error) {
+      setLoginError(lang === 'si' ? 'සේවාදායකය සමඟ සම්බන්ධ විය නොහැක' : 'Cannot connect to server');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#F9FBF7' }}>
 
       {/* Language Toggle */}
-<div className="flex justify-end px-4 pt-4">
-  <button
-    onClick={toggleLang}
-    className="relative flex items-center transition-all"
-    style={{
-      width: '80px',
-      height: '36px',
-      borderRadius: '18px',
-      background: lang === 'si' ? '#4CAF50' : '#ccc',
-      padding: '3px',
-      border: 'none',
-      cursor: 'pointer',
-      transition: 'background 0.3s',
-    }}
-  >
-    {/* Sliding dot */}
-    <div style={{
-      width: '30px',
-      height: '30px',
-      borderRadius: '50%',
-      background: '#fff',
-      boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
-      position: 'absolute',
-      left: lang === 'si' ? '4px' : '46px',
-      transition: 'left 0.3s',
-    }}/>
-    {/* Labels */}
-    <span style={{
-      position: 'absolute',
-      left: lang === 'si' ? '38px' : '10px',
-      fontSize: '11px',
-      fontWeight: '700',
-      color: '#fff',
-      transition: 'left 0.3s',
-      userSelect: 'none',
-    }}>
-      {lang === 'si' ? 'සිං' : 'EN'}
-    </span>
-  </button>
-</div>
+      <div className="flex justify-end px-4 pt-4">
+        <button
+          onClick={toggleLang}
+          className="relative flex items-center transition-all"
+          style={{
+            width: '80px',
+            height: '36px',
+            borderRadius: '18px',
+            background: lang === 'si' ? '#4CAF50' : '#ccc',
+            padding: '3px',
+            border: 'none',
+            cursor: 'pointer',
+            transition: 'background 0.3s',
+          }}
+        >
+          {/* Sliding dot */}
+          <div style={{
+            width: '30px',
+            height: '30px',
+            borderRadius: '50%',
+            background: '#fff',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
+            position: 'absolute',
+            left: lang === 'si' ? '4px' : '46px',
+            transition: 'left 0.3s',
+          }}/>
+          {/* Labels */}
+          <span style={{
+            position: 'absolute',
+            left: lang === 'si' ? '38px' : '10px',
+            fontSize: '11px',
+            fontWeight: '700',
+            color: '#fff',
+            transition: 'left 0.3s',
+            userSelect: 'none',
+          }}>
+            {lang === 'si' ? 'සිං' : 'EN'}
+          </span>
+        </button>
+      </div>
 
       {/* Header */}
       <div className="px-6 pt-10 pb-12 rounded-b-[3rem] text-white text-center"
@@ -87,6 +121,36 @@ export default function LoginPage() {
               {t.sign_in}
             </h2>
             <p className="text-xl text-center mb-8" style={{ color: '#795548' }}>{t.sign_in_sub}</p>
+
+            {registered && (
+              <div style={{
+                background: '#E8F5E9',
+                border: '1.5px solid #4CAF50',
+                borderRadius: '16px',
+                padding: '12px 16px',
+                marginBottom: '20px',
+                color: '#2E7D32',
+                fontSize: '14px',
+                fontWeight: '500'
+              }}>
+                ✅ {lang === 'si' ? 'ලියාපදිංචි වීම සාර්ථකයි! කරුණාකර ලොග් වන්න.' : 'Registration successful! Please log in.'}
+              </div>
+            )}
+
+            {loginError && (
+              <div style={{
+                background: '#FFEBEE',
+                border: '1.5px solid #EF5350',
+                borderRadius: '16px',
+                padding: '12px 16px',
+                marginBottom: '20px',
+                color: '#C62828',
+                fontSize: '14px',
+                fontWeight: '500'
+              }}>
+                ⚠️ {loginError}
+              </div>
+            )}
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-6">
 
@@ -191,5 +255,17 @@ export default function LoginPage() {
       </div>
 
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F9FBF7' }}>
+        <div style={{ width: '60px', height: '60px', borderRadius: '50%', border: '4px solid #4CAF50', borderTopColor: 'transparent' }} />
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
   );
 }

@@ -102,6 +102,43 @@ function ScanContent() {
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
 
+  const logOutbreakScan = async (diseaseName, confidence) => {
+    if (diseaseName === 'unknown') return;
+
+    const getCoords = () => {
+      return new Promise((resolve) => {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => resolve([pos.coords.longitude, pos.coords.latitude]),
+            () => resolve([80.601, 7.901])
+          );
+        } else {
+          resolve([80.601, 7.901]);
+        }
+      });
+    };
+
+    try {
+      const coords = await getCoords();
+      const token = localStorage.getItem('govi_nena_token');
+      await fetch('http://localhost:5000/api/outbreaks', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          disease: diseaseName,
+          crop: selectedCrop,
+          confidence: confidence,
+          coordinates: coords
+        })
+      });
+    } catch (err) {
+      console.error('Outbreak log fail:', err);
+    }
+  };
+
   const startCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -146,6 +183,8 @@ function ScanContent() {
         const prediction = await predict(canvas, selectedCrop, CROPS[selectedCrop].classes);
         if (!prediction) { setPredicting(false); return; }
         const { disease: diseaseName, confidence, isUncertain } = prediction;
+
+        logOutbreakScan(diseaseName, confidence);
 
         let resultMeta;
         if (diseaseName === 'unknown') {
@@ -209,6 +248,8 @@ function ScanContent() {
     const prediction = await predict(canvas, selectedCrop, CROPS[selectedCrop].classes);
     if (!prediction) { setPredicting(false); return; }
     const { disease: diseaseName, confidence, isUncertain } = prediction;
+
+    logOutbreakScan(diseaseName, confidence);
 
     let resultMeta;
     if (diseaseName === 'unknown') {

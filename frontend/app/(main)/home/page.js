@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import { useLang } from '@/lib/LanguageContext';
 
 function PaddyIcon() {
@@ -35,6 +36,64 @@ function ChiliIcon() {
 export default function HomePage() {
   const { lang, toggleLang } = useLang();
   const router = useRouter();
+  const [user, setUser] = useState(null);
+  const [weather, setWeather] = useState(null);
+  const [weatherLoading, setWeatherLoading] = useState(true);
+
+  useEffect(() => {
+    // Auth validation check
+    const token = localStorage.getItem('govi_nena_token');
+    const storedUser = localStorage.getItem('govi_nena_user');
+    if (!token || !storedUser) {
+      router.push('/login');
+      return;
+    }
+    
+    try {
+      const parsedUser = JSON.parse(storedUser);
+      setUser(parsedUser);
+    } catch (e) {
+      console.error('Error parsing user storage', e);
+      router.push('/login');
+      return;
+    }
+
+    // Geolocation and Weather trigger
+    const fetchWeather = async (lat, lng) => {
+      try {
+        setWeatherLoading(true);
+        const res = await fetch(`http://localhost:5000/api/weather?lat=${lat}&lng=${lng}`);
+        if (res.ok) {
+          const data = await res.json();
+          setWeather(data);
+        }
+      } catch (err) {
+        console.error('Weather retrieval error:', err);
+      } finally {
+        setWeatherLoading(false);
+      }
+    };
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          fetchWeather(position.coords.latitude, position.coords.longitude);
+        },
+        () => {
+          // Default to Colombo center if GPS blocked
+          fetchWeather(6.9271, 79.8612);
+        }
+      );
+    } else {
+      fetchWeather(6.9271, 79.8612);
+    }
+  }, [router]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('govi_nena_token');
+    localStorage.removeItem('govi_nena_user');
+    router.push('/login');
+  };
 
   const crops = [
     {
@@ -64,9 +123,9 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#F9FBF7' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: '#F9FBF7', fontFamily: 'system-ui, sans-serif' }}>
 
-      {/* Header - Made more compact */}
+      {/* Header */}
       <div className="px-6 pt-10 pb-6 rounded-b-2xl text-white"
         style={{ background: '#1B5E20', boxShadow: '0 4px 20px rgba(0,0,0,0.15)' }}>
 
@@ -81,7 +140,9 @@ export default function HomePage() {
               </svg>
             </div>
             <div>
-              <p className="text-sm opacity-90">{lang === 'si' ? 'ආයුබෝවන්' : 'Welcome'}</p>
+              <p className="text-sm opacity-90" style={{ margin: 0 }}>
+                {lang === 'si' ? 'ආයුබෝවන්' : 'Welcome'}, {user ? user.name : ''}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -112,11 +173,11 @@ export default function HomePage() {
             </button>
             {/* Logout */}
             <button
-              onClick={() => router.push('/login')}
+              onClick={handleLogout}
               className="flex items-center justify-center"
               style={{
                 width: '36px', height: '36px', borderRadius: '10px',
-                background: 'rgba(255,255,255,0.2)'
+                background: 'rgba(255,255,255,0.2)', border: 'none', cursor: 'pointer'
               }}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -139,14 +200,16 @@ export default function HomePage() {
               </svg>
             </div>
             <div>
-              <h1 className="text-2xl font-bold">{lang === 'si' ? 'ගොවි නැණ' : 'Govi Nena'}</h1>
+              <h1 className="text-2xl font-bold" style={{ margin: 0 }}>
+                {lang === 'si' ? 'ගොවි නැණ' : 'Govi Nena'}
+              </h1>
             </div>
           </div>
           <div className="flex gap-2">
             {/* Alerts */}
             <button
               onClick={() => router.push('/alerts')}
-              style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer' }}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                 <path d="M18 8A6 6 0 0 0 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8" stroke="white" strokeWidth="2" strokeLinecap="round"/>
@@ -156,7 +219,7 @@ export default function HomePage() {
             {/* Map */}
             <button
               onClick={() => router.push('/heatmap')}
-              style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer' }}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                 <path d="M12 2C8.13 2 5 5.13 5 9C5 14.25 12 22 12 22C12 22 19 14.25 19 9C19 5.13 15.87 2 12 2Z" stroke="white" strokeWidth="2"/>
@@ -166,11 +229,87 @@ export default function HomePage() {
           </div>
         </div>
 
-        <p className="text-lg font-semibold opacity-90">{lang === 'si' ? 'ඔබේ බෝගය තෝරන්න' : 'Select your crop'}</p>
-        <p className="text-xs opacity-75">{lang === 'si' ? 'රෝගය හඳුනා ගැනීමට' : 'To identify the disease'}</p>
+        <p className="text-lg font-semibold opacity-90" style={{ margin: 0 }}>
+          {lang === 'si' ? 'ඔබේ බෝගය තෝරන්න' : 'Select your crop'}
+        </p>
+        <p className="text-xs opacity-75" style={{ margin: '2px 0 0' }}>
+          {lang === 'si' ? 'රෝගය හඳුනා ගැනීමට' : 'To identify the disease'}
+        </p>
       </div>
 
-      {/* Crop Cards - Made more compact and clean */}
+      {/* Weather Widget */}
+      <div className="px-6 pt-6">
+        <div style={{
+          background: '#fff',
+          borderRadius: '20px',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
+          padding: '16px 20px',
+          border: '1px solid #f0f0f0',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          {weatherLoading ? (
+            <div className="flex items-center gap-3">
+              <div style={{
+                width: '18px',
+                height: '18px',
+                borderRadius: '50%',
+                border: '2.5px solid #4CAF50',
+                borderTopColor: 'transparent',
+                animation: 'spin 1s linear infinite'
+              }}/>
+              <style jsx>{`
+                @keyframes spin {
+                  0% { transform: rotate(0deg); }
+                  100% { transform: rotate(360deg); }
+                }
+              `}</style>
+              <span className="text-sm text-gray-500 font-medium">
+                {lang === 'si' ? 'කාලගුණ දත්ත සොයමින්...' : 'Fetching weather forecast...'}
+              </span>
+            </div>
+          ) : weather ? (
+            <>
+              <div>
+                <p className="text-xs text-gray-400 font-medium" style={{ margin: 0 }}>
+                  🌤️ {lang === 'si' ? 'වත්මන් කාලගුණය' : 'Current Weather'}
+                </p>
+                <h3 className="text-2xl font-bold" style={{ color: '#1B5E20', margin: '2px 0 4px' }}>
+                  {weather.temperature}
+                </h3>
+                <p className="text-xs font-semibold" style={{ color: '#795548', margin: 0 }}>
+                  📍 {lang === 'si' ? `දිස්ත්‍රික්කය: ${user?.district || ''}` : `District: ${user?.district || ''}`}
+                </p>
+              </div>
+              <div className="flex gap-4">
+                <div className="text-right">
+                  <p style={{ margin: 0, fontSize: '11px', color: '#888', fontWeight: '500' }}>
+                    💧 {lang === 'si' ? 'තෙතමනය' : 'Humidity'}
+                  </p>
+                  <p style={{ margin: '2px 0 0', fontSize: '13px', fontWeight: '700', color: '#333' }}>
+                    {weather.humidity}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p style={{ margin: 0, fontSize: '11px', color: '#888', fontWeight: '500' }}>
+                    💨 {lang === 'si' ? 'සුළඟ' : 'Wind'}
+                  </p>
+                  <p style={{ margin: '2px 0 0', fontSize: '13px', fontWeight: '700', color: '#333' }}>
+                    {weather.windSpeed}
+                  </p>
+                </div>
+              </div>
+            </>
+          ) : (
+            <span className="text-sm text-gray-400 font-medium">
+              {lang === 'si' ? 'කාලගුණ දත්ත ලබාගත නොහැක' : 'Weather details unavailable'}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Crop Cards */}
       <div className="flex-1 px-6 py-6 flex flex-col gap-4">
         {crops.map((crop) => (
           <button
@@ -181,7 +320,8 @@ export default function HomePage() {
               background: '#fff',
               boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
               padding: '16px 20px',
-              border: '1px solid #f0f0f0'
+              border: '1px solid #f0f0f0',
+              cursor: 'pointer'
             }}
           >
             {/* Background gradient overlay */}
@@ -195,7 +335,7 @@ export default function HomePage() {
               <div style={{
                 width: '48px', height: '48px', borderRadius: '12px',
                 background: crop.light,
-                display: 'flex', alignItems: 'center', justifyItems: 'center',
+                display: 'flex', alignItems: 'center',
                 justifyContent: 'center', flexShrink: 0
               }}>
                 {crop.icon}
@@ -216,7 +356,7 @@ export default function HomePage() {
         ))}
       </div>
 
-      {/* Footer - Single Language Only */}
+      {/* Footer */}
       <div className="px-6 py-3 text-center" style={{ background: '#4CAF50' }}>
         <p className="text-white text-sm font-medium" style={{ margin: 0 }}>
           {lang === 'si' ? 'රෝග හඳුනාගෙන ප්‍රතිකාර සොයන්න' : 'Identify diseases and find treatments'}
@@ -233,7 +373,8 @@ export default function HomePage() {
           { icon: 'M18 8A6 6 0 0 0 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8M13.73 21C13.5542 21.3031 13.3019 21.5547 12.9982 21.7295C12.6946 21.9044 12.3504 21.9965 12 21.9965C11.6496 21.9965 11.3054 21.9044 11.0018 21.7295C10.6982 21.5547 10.4458 21.3031 10.27 21', label: lang === 'si' ? 'ඇඟවීම්' : 'Alerts', active: false, path: '/alerts' },
         ].map((item, i) => (
           <button key={i} onClick={() => router.push(item.path)}
-            className="flex flex-col items-center gap-1">
+            className="flex flex-col items-center gap-1"
+            style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
             <div style={{
               width: '32px', height: '32px', borderRadius: '50%',
               background: item.active ? '#E8F5E9' : 'transparent',

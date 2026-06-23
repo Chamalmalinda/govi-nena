@@ -2,17 +2,21 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useLang } from '@/lib/LanguageContext';
 
 export default function RegisterPage() {
+  const router = useRouter();
   const { t, lang, toggleLang } = useLang();
   const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [district, setDistrict] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [phoneError, setPhoneError] = useState('');
+  const [formError, setFormError] = useState('');
 
 const validatePhone = (number) => {
   const cleaned = number.replace(/\s/g, '');
@@ -20,7 +24,7 @@ const validatePhone = (number) => {
   return sriLankaPattern.test(cleaned);
 };
 
-const handleSubmit = (e) => {
+const handleSubmit = async (e) => {
   e.preventDefault();
   
   if (!validatePhone(phone)) {
@@ -32,12 +36,38 @@ const handleSubmit = (e) => {
   }
   
   setPhoneError('');
+  setFormError('');
   setLoading(true);
-  setTimeout(() => setLoading(false), 1000);
+  
+  try {
+    const response = await fetch('http://localhost:5000/api/auth/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        name,
+        email,
+        phone,
+        district,
+        password
+      })
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      router.push('/login?registered=true');
+    } else {
+      setFormError(data.message || (lang === 'si' ? 'ලියාපදිංචි වීම අසාර්ථකයි' : 'Registration failed'));
+    }
+  } catch (error) {
+    setFormError(lang === 'si' ? 'සේවාදායකය සමඟ සම්බන්ධ විය නොහැක' : 'Cannot connect to server');
+  } finally {
+    setLoading(false);
+  }
 };
   const districts = t.districts;
-
-
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#F9FBF7' }}>
@@ -103,6 +133,21 @@ const handleSubmit = (e) => {
         <div className="max-w-md mx-auto">
           <div className="bg-white rounded-3xl p-8 mb-6" style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.12)' }}>
 
+            {formError && (
+              <div style={{
+                background: '#FFEBEE',
+                border: '1.5px solid #EF5350',
+                borderRadius: '16px',
+                padding: '12px 16px',
+                marginBottom: '20px',
+                color: '#C62828',
+                fontSize: '14px',
+                fontWeight: '500'
+              }}>
+                ⚠️ {formError}
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="flex flex-col gap-5">
 
               {/* Name */}
@@ -120,6 +165,29 @@ const handleSubmit = (e) => {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder={lang === 'si' ? 'කමල් පෙරේරා' : 'John Perera'}
+                    required
+                    className="w-full pl-14 pr-4 py-4 text-xl rounded-2xl outline-none transition-colors"
+                    style={{ border: '2px solid rgba(76,175,80,0.3)', color: '#333' }}
+                    onFocus={e => e.target.style.borderColor = '#4CAF50'}
+                    onBlur={e => e.target.style.borderColor = 'rgba(76,175,80,0.3)'}
+                  />
+                </div>
+              </div>
+
+              {/* Email */}
+              <div>
+                <label className="block text-xl mb-3" style={{ color: '#1B5E20' }}>Email</label>
+                <div className="relative">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                      <path d="M20 4H4C2.9 4 2.01 4.9 2.01 6L2 18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6C22 4.9 21.1 4 20 4ZM20 8L12 13L4 8V6L12 11L20 6V8Z" fill="#4CAF50"/>
+                    </svg>
+                  </div>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="example@gmail.com"
                     required
                     className="w-full pl-14 pr-4 py-4 text-xl rounded-2xl outline-none transition-colors"
                     style={{ border: '2px solid rgba(76,175,80,0.3)', color: '#333' }}
@@ -151,10 +219,10 @@ const handleSubmit = (e) => {
                   />
                 </div>
                 {phoneError && (
-  <p className="text-sm mt-2" style={{ color: '#C62828' }}>
-    ⚠️ {phoneError}
-  </p>
-)}
+                  <p className="text-sm mt-2" style={{ color: '#C62828' }}>
+                    ⚠️ {phoneError}
+                  </p>
+                )}
               </div>
 
               {/* District */}
