@@ -1,5 +1,6 @@
 const Outbreak = require('../models/Outbreak');
 const Alert = require('../models/Alert');
+const axios = require('axios');
 
 // Helper to format string properly for messages
 const capitalize = (str) => {
@@ -18,6 +19,26 @@ exports.createOutbreak = async (req, res) => {
   }
 
   try {
+    // Reverse geocode the scan coordinates to get a human-readable city/town name
+    let locationName = 'Sri Lanka';
+    try {
+      const lat = coordinates[1];
+      const lng = coordinates[0];
+      const geoUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=12`;
+      const geoResponse = await axios.get(geoUrl, {
+        headers: {
+          'User-Agent': 'GoviNenaBackend/1.0'
+        },
+        timeout: 3000
+      });
+      if (geoResponse.data && geoResponse.data.address) {
+        const address = geoResponse.data.address;
+        locationName = address.city || address.town || address.village || address.suburb || address.county || address.state || 'Sri Lanka';
+      }
+    } catch (geoErr) {
+      console.warn('Nominatim reverse geocoding failed for outbreak, using fallback:', geoErr.message);
+    }
+
     const newOutbreak = new Outbreak({
       disease,
       crop,
@@ -25,7 +46,8 @@ exports.createOutbreak = async (req, res) => {
       location: {
         type: 'Point',
         coordinates: [parseFloat(coordinates[0]), parseFloat(coordinates[1])] // [lng, lat]
-      }
+      },
+      locationName
     });
 
     await newOutbreak.save();

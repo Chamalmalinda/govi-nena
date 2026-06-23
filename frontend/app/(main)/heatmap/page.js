@@ -252,7 +252,7 @@ export default function HeatmapPage() {
                     {getDiseaseName(o.disease)}
                   </h4>
                   <p style={{ margin: 0, color: '#795548', fontSize: '12px', fontWeight: '500' }}>
-                    📍 {lang === 'si' ? 'ඛණ්ඩාංක' : 'Coordinates'}: {o.location.coordinates[1].toFixed(4)}, {o.location.coordinates[0].toFixed(4)}
+                    📍 {o.locationName || `${o.location.coordinates[1].toFixed(4)}, ${o.location.coordinates[0].toFixed(4)}`}
                   </p>
                 </div>
                 <div style={{ textAlign: 'right' }}>

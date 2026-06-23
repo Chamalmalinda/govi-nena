@@ -28,6 +28,10 @@ const OutbreakSchema = new mongoose.Schema({
       required: true
     }
   },
+  locationName: {
+    type: String,
+    default: 'Sri Lanka'
+  },
   timestamp: {
     type: Date,
     default: Date.now

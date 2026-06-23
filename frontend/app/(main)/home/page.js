@@ -279,7 +279,7 @@ export default function HomePage() {
                   {weather.temperature}
                 </h3>
                 <p className="text-xs font-semibold" style={{ color: '#795548', margin: 0 }}>
-                  📍 {lang === 'si' ? `දිස්ත්‍රික්කය: ${user?.district || ''}` : `District: ${user?.district || ''}`}
+                  📍 {weather.locationName || (lang === 'si' ? `දිස්ත්‍රික්කය: ${user?.district || ''}` : `District: ${user?.district || ''}`)}
                 </p>
               </div>
               <div className="flex gap-4">
