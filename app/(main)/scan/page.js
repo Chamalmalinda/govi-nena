@@ -12,6 +12,52 @@ const CROPS = {
   chili: { si: 'මිරිස්', en: 'Chili', emoji: '🌶️', classes: ['Bacterial Spot','Cercospora Leaf Spot','Curl Virus','Healthy Leaf','Nutrition Deficiency','White spot'] }
 };
 
+const processHighResImage = (img, maxDim = 800) => {
+  return new Promise((resolve) => {
+    const tempCanvas = document.createElement('canvas');
+    const tempCtx = tempCanvas.getContext('2d');
+    let w = img.naturalWidth || img.width;
+    let h = img.naturalHeight || img.height;
+    
+    if (w > maxDim || h > maxDim) {
+      if (w > h) {
+        h = Math.round((h * maxDim) / w);
+        w = maxDim;
+      } else {
+        w = Math.round((w * maxDim) / h);
+        h = maxDim;
+      }
+    }
+    
+    tempCanvas.width = w;
+    tempCanvas.height = h;
+    tempCtx.drawImage(img, 0, 0, w, h);
+    resolve(tempCanvas.toDataURL('image/jpeg', 0.85));
+  });
+};
+
+const processHighResFromVideo = (video, maxDim = 800) => {
+  const tempCanvas = document.createElement('canvas');
+  const tempCtx = tempCanvas.getContext('2d');
+  let w = video.videoWidth || 640;
+  let h = video.videoHeight || 480;
+  
+  if (w > maxDim || h > maxDim) {
+    if (w > h) {
+      h = Math.round((h * maxDim) / w);
+      w = maxDim;
+    } else {
+      w = Math.round((w * maxDim) / h);
+      h = maxDim;
+    }
+  }
+  
+  tempCanvas.width = w;
+  tempCanvas.height = h;
+  tempCtx.drawImage(video, 0, 0, w, h);
+  return tempCanvas.toDataURL('image/jpeg', 0.85);
+};
+
 function LangToggle({ lang, toggleLang }) {
   return (
     <button onClick={toggleLang} style={{
@@ -87,27 +133,30 @@ function ScanContent() {
     reader.onload = async (e) => {
       const img = new Image();
       img.onload = async () => {
+        // Generate high-resolution image for display and storage
+        const highResDataUrl = await processHighResImage(img, 800);
+        setCapturedImage(highResDataUrl);
+
         const canvas = canvasRef.current;
         const ctx = canvas.getContext('2d');
         canvas.width = 224;
         canvas.height = 224;
         ctx.drawImage(img, 0, 0, 224, 224);
         
-        const dataUrl = canvas.toDataURL('image/jpeg');
-        setCapturedImage(dataUrl);
-
         const prediction = await predict(canvas, selectedCrop, CROPS[selectedCrop].classes);
         if (!prediction) { setPredicting(false); return; }
         const { disease: diseaseName, confidence, isUncertain } = prediction;
 
+        let resultMeta;
         if (diseaseName === 'unknown') {
-          setResult({ 
+          resultMeta = { 
             disease: 'unknown', 
             confidence, 
             isUncertain: true,
             siName: 'හඳුනාගත නොහැකි රෝගයක්',
             enName: 'Disease Not Identified'
-          });
+          };
+          setResult(resultMeta);
           setTreatment({
             name: t.results_unknown,
             symptoms: t.results_unknown_symptoms,
@@ -119,16 +168,19 @@ function ScanContent() {
           const treatmentData = await getTreatmentOffline(selectedCrop, diseaseName, lang);
           const siData = await getTreatmentOffline(selectedCrop, diseaseName, 'si');
           const enData = await getTreatmentOffline(selectedCrop, diseaseName, 'en');
-          setResult({ 
+          resultMeta = { 
             disease: diseaseName, 
             confidence, 
             isUncertain,
             siName: siData.name,
             enName: enData.name
-          });
+          };
+          setResult(resultMeta);
           setTreatment(treatmentData);
-          localStorage.setItem('govi_nena_last_scan_image', dataUrl);
         }
+        localStorage.setItem('govi_nena_last_scan_image', highResDataUrl);
+        localStorage.setItem('govi_nena_last_result', JSON.stringify(resultMeta));
+        sessionStorage.setItem('govi_nena_scan_active_result', 'true');
         setPredicting(false);
         setStep('result');
       };
@@ -141,26 +193,33 @@ function ScanContent() {
   const captureAndPredict = async () => {
     if (!model || !videoRef.current) return;
     setPredicting(true);
+    const video = videoRef.current;
+    
+    // Generate high-resolution image from video
+    const highResDataUrl = processHighResFromVideo(video, 800);
+    setCapturedImage(highResDataUrl);
+    stopCamera();
+
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     canvas.width = 224;
     canvas.height = 224;
-    ctx.drawImage(videoRef.current, 0, 0, 224, 224);
-    setCapturedImage(canvas.toDataURL('image/jpeg'));
-    stopCamera();
+    ctx.drawImage(video, 0, 0, 224, 224);
 
     const prediction = await predict(canvas, selectedCrop, CROPS[selectedCrop].classes);
     if (!prediction) { setPredicting(false); return; }
     const { disease: diseaseName, confidence, isUncertain } = prediction;
 
+    let resultMeta;
     if (diseaseName === 'unknown') {
-      setResult({ 
+      resultMeta = { 
         disease: 'unknown', 
         confidence, 
         isUncertain: true,
         siName: 'හඳුනාගත නොහැකි රෝගයක්',
         enName: 'Disease Not Identified'
-      });
+      };
+      setResult(resultMeta);
       setTreatment({
         name: t.results_unknown,
         symptoms: t.results_unknown_symptoms,
@@ -172,32 +231,65 @@ function ScanContent() {
       const treatmentData = await getTreatmentOffline(selectedCrop, diseaseName, lang);
       const siData = await getTreatmentOffline(selectedCrop, diseaseName, 'si');
       const enData = await getTreatmentOffline(selectedCrop, diseaseName, 'en');
-      setResult({ 
+      resultMeta = { 
         disease: diseaseName, 
         confidence, 
         isUncertain,
         siName: siData.name,
         enName: enData.name
-      });
+      };
+      setResult(resultMeta);
       setTreatment(treatmentData);
-      localStorage.setItem('govi_nena_last_scan_image', canvas.toDataURL('image/jpeg'));
     }
+    localStorage.setItem('govi_nena_last_scan_image', highResDataUrl);
+    localStorage.setItem('govi_nena_last_result', JSON.stringify(resultMeta));
+    sessionStorage.setItem('govi_nena_scan_active_result', 'true');
     setPredicting(false);
     setStep('result');
   };
 
   const speakResult = () => {
     if (!treatment) return;
+    
     const chemText = result?.isUncertain
       ? (lang === 'si' ? 'අවිනිශ්චිත ස්කෑන් පරීක්ෂණ සඳහා රසායනික ප්‍රතිකාර නිර්දේශ නොකෙරේ.' : 'Chemical recommendations are withheld for uncertain scans.')
       : treatment.chemical;
-    const text = `${t.results_detected}: ${treatment.name}. ${t.results_symptoms}: ${treatment.symptoms}. ${t.results_chemical}: ${chemText}`;
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = lang === 'si' ? 'si-LK' : 'en-US';
-    window.speechSynthesis.speak(utterance);
+
+    // Construct full descriptive speech text
+    const text = lang === 'si'
+      ? `හඳුනාගත් රෝගය: ${treatment.name}. රෝග ලක්ෂණ: ${treatment.symptoms}. රසායනික ප්‍රතිකාර: ${chemText}. කාබනික ප්‍රතිකාර: ${treatment.organic}. වැළැක්වීම: ${treatment.prevention}.`
+      : `Detected disease: ${treatment.name}. Symptoms: ${treatment.symptoms}. Chemical treatment: ${chemText}. Organic treatment: ${treatment.organic}. Prevention: ${treatment.prevention}.`;
+
+    const speakNativeFallback = () => {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = lang === 'si' ? 'si-LK' : 'en-US';
+      window.speechSynthesis.speak(utterance);
+    };
+
+    if (typeof window !== 'undefined' && navigator.onLine) {
+      // Use local Next.js server-side TTS API
+      const url = `/api/tts?text=${encodeURIComponent(text)}&lang=${lang}`;
+      const audio = new Audio(url);
+      
+      // Handle source loading errors
+      audio.addEventListener('error', () => {
+        console.warn("Server-side TTS failed to load, falling back to native SpeechSynthesis");
+        speakNativeFallback();
+      });
+
+      // Handle autoplay browser blocks
+      audio.play().catch(err => {
+        console.warn("Server-side TTS play failed, falling back to native SpeechSynthesis", err);
+        speakNativeFallback();
+      });
+    } else {
+      // Device offline: Fallback to native client-side speech engine
+      speakNativeFallback();
+    }
   };
 
   const handleReset = () => {
+    sessionStorage.removeItem('govi_nena_scan_active_result');
     setStep('camera');
     setResult(null);
     setTreatment(null);
@@ -240,11 +332,51 @@ function ScanContent() {
       router.push('/home');
       return;
     }
-    loadModel(cropFromUrl).then(loaded => { 
-      if (loaded) {
-        startCamera();
+
+    const restoreActiveResult = async () => {
+      const activeResultFlag = sessionStorage.getItem('govi_nena_scan_active_result');
+      if (activeResultFlag === 'true') {
+        const storedImage = localStorage.getItem('govi_nena_last_scan_image');
+        const storedResult = localStorage.getItem('govi_nena_last_result');
+        if (storedImage && storedResult) {
+          try {
+            const parsedResult = JSON.parse(storedResult);
+            setCapturedImage(storedImage);
+            setResult(parsedResult);
+            
+            if (parsedResult.disease === 'unknown') {
+              setTreatment({
+                name: t.results_unknown,
+                symptoms: t.results_unknown_symptoms,
+                chemical: t.results_unknown_consult,
+                organic: t.results_unknown_consult,
+                prevention: t.results_unknown_tip
+              });
+            } else {
+              const treatmentData = await getTreatmentOffline(cropFromUrl, parsedResult.disease, lang);
+              setTreatment(treatmentData);
+            }
+            
+            setStep('result');
+            return true;
+          } catch (err) {
+            console.error('Error restoring active scan result', err);
+          }
+        }
+      }
+      return false;
+    };
+
+    restoreActiveResult().then((restored) => {
+      if (!restored) {
+        loadModel(cropFromUrl).then(loaded => { 
+          if (loaded) {
+            startCamera();
+          }
+        });
       }
     });
+
     return () => stopCamera();
   }, [cropFromUrl, router, loadModel]);
 
@@ -255,7 +387,11 @@ function ScanContent() {
         <canvas ref={canvasRef} style={{ display: 'none' }} />
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'clamp(32px, 5vw, 64px) clamp(16px, 3vw, 40px) 16px' }}>
-          <button onClick={() => { stopCamera(); router.push('/home'); }} style={{ color: '#fff', fontSize: 'clamp(18px, 2vw, 26px)', background: 'none', border: 'none', cursor: 'pointer' }}>✕</button>
+          <button onClick={() => { 
+            sessionStorage.removeItem('govi_nena_scan_active_result');
+            stopCamera(); 
+            router.push('/home'); 
+          }} style={{ color: '#fff', fontSize: 'clamp(18px, 2vw, 26px)', background: 'none', border: 'none', cursor: 'pointer' }}>✕</button>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
             <div style={{ background: 'rgba(46,125,50,0.85)', borderRadius: '20px', padding: '8px 20px', color: '#fff', fontSize: 'clamp(13px, 1.2vw, 18px)', fontWeight: '600' }}>
               {selectedCrop && `${CROPS[selectedCrop].emoji} ${lang === 'si' ? CROPS[selectedCrop].si : CROPS[selectedCrop].en}`}
@@ -408,8 +544,25 @@ function ScanContent() {
               <h3 style={{ color: '#1B5E20', fontSize: 'clamp(15px, 1.5vw, 18px)', fontWeight: '600', marginBottom: '14px', marginTop: 0 }}>
                 Captured Image / ග්‍රහණය කළ රූපය
               </h3>
-              <div style={{ position: 'relative', borderRadius: '16px', overflow: 'hidden', height: 'clamp(140px, 20vw, 200px)' }}>
-                <img src={capturedImage} alt="captured" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              <div style={{ 
+                position: 'relative', 
+                borderRadius: '16px', 
+                overflow: 'hidden', 
+                maxHeight: '320px', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                background: '#f4f6f0',
+                boxShadow: 'inset 0 0 10px rgba(0,0,0,0.05)'
+              }}>
+                <img src={capturedImage} alt="captured" style={{ 
+                  maxWidth: '100%', 
+                  maxHeight: '320px', 
+                  width: 'auto',
+                  height: 'auto',
+                  objectFit: 'contain', 
+                  display: 'block' 
+                }} />
                 <div style={{ position: 'absolute', top: '12px', right: '12px', background: 'rgba(0,0,0,0.65)', color: '#fff', padding: '4px 14px', borderRadius: '20px', fontSize: 'clamp(11px, 1vw, 14px)', fontWeight: '500' }}>
                   {result.confidence}% match
                 </div>

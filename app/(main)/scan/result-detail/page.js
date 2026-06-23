@@ -98,59 +98,60 @@ function ResultDetailContent() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#F9FBF7', fontFamily: 'system-ui, sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: '#F9FBF7', fontFamily: 'system-ui, sans-serif', display: 'flex', flexDirection: 'column' }}>
 
-      {/* Hero Image */}
-      <div style={{ position: 'relative', height: 'clamp(220px, 35vw, 400px)', overflow: 'hidden' }}>
-        {image
-          ? <img src={image} alt="captured" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-          : <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, #1B5E20, #4CAF50)' }} />
-        }
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 50%)' }} />
-
-        {/* Top buttons */}
-        <div style={{ position: 'absolute', top: 'clamp(32px, 5vw, 56px)', left: 0, right: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 clamp(16px, 4vw, 48px)' }}>
-          <button onClick={() => router.back()} style={{ width: 'clamp(44px, 5vw, 56px)', height: 'clamp(44px, 5vw, 56px)', borderRadius: '50%', background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-              <path d="M19 12H5M12 5L5 12L12 19" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+      {/* Sticky Green Header */}
+      <div style={{
+        background: '#1B5E20',
+        padding: 'clamp(36px, 5vw, 64px) clamp(20px, 4vw, 60px) clamp(20px, 3vw, 40px)',
+        borderRadius: '0 0 24px 24px',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 10
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
+          <button onClick={() => router.back()} style={{ width: 'clamp(40px, 4vw, 56px)', height: 'clamp(40px, 4vw, 56px)', borderRadius: '50%', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', flexShrink: 0 }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M19 12H5M12 5L5 12L12 19" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
             </svg>
           </button>
-
-          <LangToggle lang={lang} toggleLang={toggleLang} />
-
-          <button onClick={handleShare} style={{ width: 'clamp(44px, 5vw, 56px)', height: 'clamp(44px, 5vw, 56px)', borderRadius: '50%', background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-              <circle cx="18" cy="5" r="3" stroke="white" strokeWidth="2"/>
-              <circle cx="6" cy="12" r="3" stroke="white" strokeWidth="2"/>
-              <circle cx="18" cy="19" r="3" stroke="white" strokeWidth="2"/>
-              <path d="M8.59 13.51L15.42 17.49M15.41 6.51L8.59 10.49" stroke="white" strokeWidth="2"/>
-            </svg>
-          </button>
-        </div>
-
-        {/* Disease badge */}
-        <div style={{ position: 'absolute', bottom: 'clamp(16px, 3vw, 32px)', left: 'clamp(16px, 4vw, 48px)', right: 'clamp(16px, 4vw, 48px)' }}>
-          <div style={{ background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(12px)', borderRadius: 'clamp(16px, 2vw, 24px)', padding: 'clamp(16px, 2.5vw, 28px)', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
-            <h2 style={{ color: '#1B5E20', fontSize: 'clamp(20px, 3vw, 36px)', fontWeight: '700', margin: '0 0 4px' }}>{treatment.name}</h2>
-            <p style={{ color: '#795548', fontSize: 'clamp(13px, 1.5vw, 20px)', margin: '0 0 14px' }}>{diseaseName}</p>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{ flex: 1, height: 'clamp(8px, 1vw, 12px)', background: '#e0e0e0', borderRadius: '6px', overflow: 'hidden' }}>
-                <div style={{ height: '100%', background: parseFloat(confidence) >= 80 ? '#4CAF50' : parseFloat(confidence) >= 60 ? '#FDD835' : '#FF9800', borderRadius: '6px', width: `${confidence}%`, transition: 'width 0.6s ease' }} />
-              </div>
-              <span style={{ color: '#1B5E20', fontSize: 'clamp(16px, 1.8vw, 24px)', fontWeight: '700', flexShrink: 0 }}>{confidence}%</span>
-            </div>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <h1 style={{ color: '#fff', fontSize: 'clamp(18px, 2.2vw, 26px)', fontWeight: '700', margin: 0 }}>Disease Details</h1>
+            <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 'clamp(12px, 1.2vw, 15px)', margin: '2px 0 0', fontWeight: '500' }}>රෝග විස්තර</p>
           </div>
+          <LangToggle lang={lang} toggleLang={toggleLang} />
+          <button onClick={handleShare} style={{ width: 'clamp(44px, 4.5vw, 60px)', height: 'clamp(44px, 4.5vw, 60px)', borderRadius: '50%', background: '#FDD835', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', flexShrink: 0, boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <circle cx="18" cy="5" r="3" stroke="#1B5E20" strokeWidth="2.5" />
+              <circle cx="6" cy="12" r="3" stroke="#1B5E20" strokeWidth="2.5" />
+              <circle cx="18" cy="19" r="3" stroke="#1B5E20" strokeWidth="2.5" />
+              <path d="M8.59 13.51L15.42 17.49M15.41 6.51L8.59 10.49" stroke="#1B5E20" strokeWidth="2.5" />
+            </svg>
+          </button>
         </div>
       </div>
 
-      {/* Content */}
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: 'clamp(24px, 4vw, 48px) clamp(16px, 5vw, 60px)', display: 'flex', flexDirection: 'column', gap: 'clamp(20px, 3vw, 32px)' }}>
+      {/* Main Content Area */}
+      <div style={{
+        flex: 1,
+        padding: 'clamp(20px, 3vw, 48px) clamp(16px, 4vw, 32px)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '20px',
+        maxWidth: '800px',
+        margin: '0 auto',
+        width: '100%',
+        boxSizing: 'border-box',
+        paddingBottom: '48px'
+      }}>
 
+        {/* Uncertain Warning Banner */}
         {isUncertain && (
           <div style={{
             background: '#FFFDE7',
             border: '1.5px solid #FBC02D',
-            borderRadius: 'clamp(20px, 2.5vw, 32px)',
+            borderRadius: '20px',
             padding: '20px',
             display: 'flex',
             alignItems: 'center',
@@ -168,8 +169,8 @@ function ResultDetailContent() {
                 {lang === 'si' ? 'අවිනිශ්චිත ස්කෑන් පරීක්ෂණයකි' : 'Uncertain Scan Result'}
               </h4>
               <p style={{ color: '#5D4037', margin: 0, fontSize: 'clamp(12px, 1vw, 15px)', lineHeight: '1.4' }}>
-                {lang === 'si' 
-                  ? `මෙම රෝග විනිශ්චය 30% - 59% අතර අවිනිශ්චිත මට්ටමක පවතී. නිවැරදි රසායනික ප්‍රතිකාර භාවිතයට පෙර, වඩාත් හොඳ ආලෝකයකින් පත්‍රය ලඟට කර නැවත ස්කෑන් කිරීමට කාරුණික වන්න.` 
+                {lang === 'si'
+                  ? `මෙම රෝග විනිශ්චය 30% - 59% අතර අවිනිශ්චිත මට්ටමක පවතී. නිවැරදි රසායනික ප්‍රතිකාර භාවිතයට පෙර, වඩාත් හොඳ ආලෝකයකින් පත්‍රය ලඟට කර නැවත ස්කෑන් කිරීමට කාරුණික වන්න.`
                   : `This match is uncertain (30% - 59% confidence). Before applying chemical treatments, please scan again closer to the leaf under better lighting.`
                 }
               </p>
@@ -177,81 +178,163 @@ function ResultDetailContent() {
           </div>
         )}
 
-        {/* Symptoms */}
-        <div style={{ background: '#fff', borderRadius: 'clamp(20px, 2.5vw, 32px)', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', padding: 'clamp(20px, 3vw, 40px)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-            <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#C62828', flexShrink: 0 }} />
-            <h3 style={{ color: '#C62828', fontSize: 'clamp(17px, 2vw, 26px)', fontWeight: '600', margin: 0 }}>{t.detail_symptoms}</h3>
+        {/* Captured Image Card */}
+        {image && (
+          <div style={{ background: '#fff', borderRadius: '20px', boxShadow: '0 4px 16px rgba(0,0,0,0.08)', padding: '20px' }}>
+            <h3 style={{ color: '#1B5E20', fontSize: 'clamp(15px, 1.5vw, 18px)', fontWeight: '600', marginBottom: '14px', marginTop: 0 }}>
+              Captured Image / ග්‍රහණය කළ රූපය
+            </h3>
+            <div style={{
+              position: 'relative',
+              borderRadius: '16px',
+              overflow: 'hidden',
+              maxHeight: '320px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: '#f4f6f0',
+              boxShadow: 'inset 0 0 10px rgba(0,0,0,0.05)'
+            }}>
+              <img src={image} alt="captured" style={{
+                maxWidth: '100%',
+                maxHeight: '320px',
+                width: 'auto',
+                height: 'auto',
+                objectFit: 'contain',
+                display: 'block'
+              }} />
+              <div style={{ position: 'absolute', top: '12px', right: '12px', background: 'rgba(0,0,0,0.65)', color: '#fff', padding: '4px 14px', borderRadius: '20px', fontSize: 'clamp(11px, 1vw, 14px)', fontWeight: '500' }}>
+                {confidence}% match
+              </div>
+            </div>
           </div>
-          <p style={{ color: '#555', fontSize: 'clamp(14px, 1.3vw, 20px)', lineHeight: 1.7, margin: 0 }}>{treatment.symptoms}</p>
+        )}
+
+        {/* Disease Details Header Card */}
+        <div style={{ background: '#fff', borderRadius: '20px', boxShadow: '0 4px 16px rgba(0,0,0,0.08)', padding: '20px 24px' }}>
+          <h2 style={{ color: '#1B5E20', fontSize: 'clamp(22px, 3vw, 32px)', fontWeight: '700', margin: '0 0 4px 0', fontFamily: 'system-ui, sans-serif' }}>
+            {treatment.name}
+          </h2>
+          <p style={{ color: '#795548', fontSize: 'clamp(16px, 1.8vw, 20px)', fontWeight: '600', margin: '0 0 20px 0' }}>
+            {diseaseName}
+          </p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: 'clamp(12px, 1vw, 14px)' }}>
+            <span style={{ color: '#888', fontWeight: '500' }}>Confidence / විශ්වාසය</span>
+            <span style={{ color: '#333', fontWeight: '700' }}>{confidence}%</span>
+          </div>
+          <div style={{ height: '10px', background: '#e8e8e8', borderRadius: '8px', overflow: 'hidden' }}>
+            <div style={{ height: '100%', borderRadius: '8px', transition: 'width 0.6s ease', background: '#4CAF50', width: `${confidence}%` }} />
+          </div>
         </div>
 
-        {/* Environmental Factors */}
-        <div style={{ background: '#fff', borderRadius: 'clamp(20px, 2.5vw, 32px)', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', padding: 'clamp(20px, 3vw, 40px)' }}>
-          <h3 style={{ color: '#1B5E20', fontSize: 'clamp(18px, 2vw, 28px)', fontWeight: '600', margin: '0 0 20px' }}>{t.detail_env}</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 'clamp(12px, 2vw, 20px)' }}>
+        {/* Symptoms / Description Card */}
+        <div style={{ background: '#fff', borderRadius: '20px', boxShadow: '0 4px 16px rgba(0,0,0,0.08)', padding: '20px 24px' }}>
+          <h3 style={{ color: '#1B5E20', fontSize: 'clamp(15px, 1.5vw, 18px)', fontWeight: '600', margin: '0 0 12px 0' }}>
+            {t.detail_symptoms}
+          </h3>
+          <p style={{ color: '#555', fontSize: 'clamp(14px, 1.2vw, 17px)', lineHeight: 1.6, margin: 0 }}>
+            {treatment.symptoms}
+          </p>
+        </div>
+
+        {/* Environmental Factors Card */}
+        <div style={{ background: '#fff', borderRadius: '20px', boxShadow: '0 4px 16px rgba(0,0,0,0.08)', padding: '20px 24px' }}>
+          <h3 style={{ color: '#1B5E20', fontSize: 'clamp(15px, 1.5vw, 18px)', fontWeight: '600', margin: '0 0 16px 0' }}>
+            {t.detail_env}
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '16px' }}>
             {envFactors.map((f, i) => (
-              <div key={i} style={{ background: '#F9FBF7', borderRadius: 'clamp(14px, 1.5vw, 20px)', padding: 'clamp(14px, 2vw, 24px)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-                  <span style={{ fontSize: 'clamp(18px, 2vw, 26px)' }}>{f.icon}</span>
-                  <span style={{ color: '#795548', fontSize: 'clamp(11px, 1vw, 14px)' }}>{f.label}</span>
+              <div key={i} style={{ background: '#F9FBF7', borderRadius: '16px', padding: '16px', border: '1px solid #f0f4ef' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '20px' }}>{f.icon}</span>
+                  <span style={{ color: '#795548', fontSize: '12px', fontWeight: '500' }}>{f.label}</span>
                 </div>
-                <p style={{ color: '#1B5E20', fontSize: 'clamp(15px, 1.8vw, 22px)', fontWeight: '700', margin: '0 0 4px' }}>{f.value}</p>
-                <p style={{ color: f.color, fontSize: 'clamp(11px, 1vw, 14px)', margin: 0, fontWeight: '500' }}>{f.status}</p>
+                <p style={{ color: '#1B5E20', fontSize: '18px', fontWeight: '700', margin: '0 0 4px' }}>{f.value}</p>
+                <p style={{ color: f.color, fontSize: '12px', margin: 0, fontWeight: '600' }}>{f.status}</p>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Warning Signs */}
-        <div style={{ background: '#fff', borderRadius: 'clamp(20px, 2.5vw, 32px)', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', padding: 'clamp(20px, 3vw, 40px)' }}>
-          <div style={{ background: 'rgba(253,216,53,0.12)', borderLeft: '4px solid #FDD835', borderRadius: '0 12px 12px 0', padding: 'clamp(16px, 2vw, 24px)' }}>
-            <h4 style={{ color: '#1B5E20', fontSize: 'clamp(15px, 1.5vw, 20px)', fontWeight: '600', margin: '0 0 12px' }}>
-              ⚠️ {t.detail_warning}
+        {/* Warning Signs Banner Card */}
+        <div style={{ background: '#fff', borderRadius: '20px', boxShadow: '0 4px 16px rgba(0,0,0,0.08)', padding: '20px 24px' }}>
+          <div style={{ background: '#FFFDE7', border: '1.5px solid #FBC02D', borderRadius: '16px', padding: '16px' }}>
+            <h4 style={{ color: '#F57F17', margin: '0 0 10px 0', fontSize: 'clamp(14px, 1.2vw, 17px)', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>⚠️</span> {t.detail_warning}
             </h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {warningSigns.map((sign, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-                  <span style={{ color: '#E65100', fontSize: '16px', flexShrink: 0 }}>•</span>
-                  <p style={{ color: '#555', fontSize: 'clamp(13px, 1.2vw, 18px)', lineHeight: 1.6, margin: 0 }}>{sign}</p>
+                <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                  <span style={{ color: '#F57F17', fontSize: '14px', flexShrink: 0, marginTop: '2px' }}>•</span>
+                  <p style={{ color: '#5D4037', fontSize: 'clamp(12px, 1vw, 15px)', lineHeight: '1.4', margin: 0 }}>{sign}</p>
                 </div>
               ))}
             </div>
           </div>
         </div>
 
-        {/* Prevention Tips */}
-        <div style={{ background: '#fff', borderRadius: 'clamp(20px, 2.5vw, 32px)', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', padding: 'clamp(20px, 3vw, 40px)' }}>
-          <h3 style={{ color: '#1B5E20', fontSize: 'clamp(18px, 2vw, 28px)', fontWeight: '600', margin: '0 0 20px' }}>{t.detail_prevention}</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(14px, 2vw, 20px)' }}>
+        {/* Prevention Tips Card */}
+        <div style={{ background: '#fff', borderRadius: '20px', boxShadow: '0 4px 16px rgba(0,0,0,0.08)', padding: '20px 24px' }}>
+          <h3 style={{ color: '#1B5E20', fontSize: 'clamp(15px, 1.5vw, 18px)', fontWeight: '600', margin: '0 0 16px 0' }}>
+            {t.detail_prevention}
+          </h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {preventionTips.map((tip, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 'clamp(12px, 1.5vw, 20px)' }}>
-                <div style={{ width: 'clamp(36px, 3.5vw, 48px)', height: 'clamp(36px, 3.5vw, 48px)', borderRadius: '50%', background: '#E8F5E9', color: '#1B5E20', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'clamp(15px, 1.5vw, 20px)', fontWeight: '700', flexShrink: 0 }}>
+              <div key={i} style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#E8F5E9', color: '#1B5E20', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: '700', flexShrink: 0, marginTop: '2px' }}>
                   {i + 1}
                 </div>
-                <p style={{ color: '#555', fontSize: 'clamp(14px, 1.3vw, 20px)', lineHeight: 1.7, margin: 0, paddingTop: '6px' }}>{tip}</p>
+                <p style={{ color: '#555', fontSize: 'clamp(13px, 1.2vw, 16px)', lineHeight: 1.5, margin: 0, paddingTop: '4px' }}>{tip}</p>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Treatment Steps */}
-        <div style={{ background: 'linear-gradient(135deg, #1B5E20, #4CAF50)', borderRadius: 'clamp(20px, 2.5vw, 32px)', boxShadow: '0 8px 32px rgba(46,125,50,0.3)', padding: 'clamp(20px, 3vw, 40px)' }}>
-          <h3 style={{ color: '#fff', fontSize: 'clamp(18px, 2vw, 28px)', fontWeight: '600', margin: '0 0 24px' }}>{t.detail_treatment}</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(12px, 1.5vw, 20px)' }}>
-            {treatmentSteps.map((step, i) => (
-              <div key={i} style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(8px)', borderRadius: 'clamp(14px, 1.5vw, 20px)', padding: 'clamp(16px, 2vw, 24px)', display: 'flex', alignItems: 'flex-start', gap: 'clamp(12px, 1.5vw, 20px)' }}>
-                <div style={{ width: 'clamp(36px, 3.5vw, 48px)', height: 'clamp(36px, 3.5vw, 48px)', borderRadius: '50%', background: '#FDD835', color: '#1B5E20', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'clamp(15px, 1.5vw, 20px)', fontWeight: '700', flexShrink: 0 }}>
-                  {i + 1}
+        {/* Treatment Steps Card */}
+        <div style={{ background: '#fff', borderRadius: '20px', boxShadow: '0 4px 16px rgba(0,0,0,0.08)', padding: '20px 24px' }}>
+          <h3 style={{ color: '#1B5E20', fontSize: 'clamp(15px, 1.5vw, 18px)', fontWeight: '600', margin: '0 0 16px 0' }}>
+            {t.detail_treatment}
+          </h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {[
+              { label: lang === 'si' ? 'නිරීක්ෂණය / Observation' : 'Observation / නිරීක්ෂණය', text: treatmentSteps[0], color: '#795548' },
+              { label: lang === 'si' ? 'රසායනික ප්‍රතිකාර / Chemical Treatment' : 'Chemical Treatment / රසායනික ප්‍රතිකාර', text: treatmentSteps[1], color: '#1565C0' },
+              { label: lang === 'si' ? 'කාබනික ප්‍රතිකාර / Organic Treatment' : 'Organic Treatment / කාබනික ප්‍රතිකාර', text: treatmentSteps[2], color: '#2E7D32' },
+              { label: lang === 'si' ? 'පසු විපරම / Follow-up' : 'Follow-up / පසු විපරම', text: treatmentSteps[3], color: '#E65100' }
+            ].map((s, index) => (
+              <div key={index} style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', justifyContent: 'space-between', paddingBottom: index < 3 ? '16px' : '0', borderBottom: index < 3 ? '1px solid #f0f0f0' : 'none' }}>
+                <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', flex: 1 }}>
+                  <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#4CAF50', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: '700', flexShrink: 0, marginTop: '2px' }}>
+                    {index + 1}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ color: s.color, fontSize: 'clamp(12px, 1vw, 15px)', fontWeight: '600', margin: '0 0 4px 0' }}>
+                      {s.label}
+                    </p>
+                    <p style={{ color: '#555', fontSize: 'clamp(13px, 1.2vw, 16px)', lineHeight: 1.5, margin: 0 }}>
+                      {s.text}
+                    </p>
+                  </div>
                 </div>
-                <p style={{ color: '#fff', fontSize: 'clamp(14px, 1.3vw, 20px)', lineHeight: 1.7, margin: 0, paddingTop: '6px' }}>{step}</p>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Back button */}
-        <button onClick={() => router.back()} style={{ background: '#fff', border: '2px solid #2E7D32', borderRadius: 'clamp(16px, 2vw, 24px)', padding: 'clamp(16px, 1.5vw, 22px)', color: '#2E7D32', fontWeight: '600', fontSize: 'clamp(15px, 1.5vw, 20px)', cursor: 'pointer', width: '100%' }}>
+        {/* Back Button */}
+        <button onClick={() => router.back()} style={{
+          background: 'transparent',
+          border: '2px solid #2E7D32',
+          borderRadius: '20px',
+          padding: '16px',
+          color: '#2E7D32',
+          fontWeight: '600',
+          fontSize: 'clamp(15px, 1.5vw, 18px)',
+          cursor: 'pointer',
+          width: '100%',
+          fontFamily: 'inherit',
+          transition: 'background 0.2s'
+        }}>
           {t.detail_back}
         </button>
 
