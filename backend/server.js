@@ -12,6 +12,20 @@ connectDB();
 app.use(cors());
 app.use(express.json());
 
+// Import Routes
+const authRoutes = require('./routes/auth');
+const outbreakRoutes = require('./routes/outbreaks');
+const alertRoutes = require('./routes/alerts');
+const weatherRoutes = require('./routes/weather');
+const ttsRoutes = require('./routes/tts');
+
+// Bind Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/outbreaks', outbreakRoutes);
+app.use('/api/alerts', alertRoutes);
+app.use('/api/weather', weatherRoutes);
+app.use('/api/tts', ttsRoutes);
+
 // Base Route / Health Check
 app.get('/health', (req, res) => {
   res.status(200).json({
