@@ -37,55 +37,21 @@ export default function HomePage() {
   const { lang, toggleLang } = useLang();
   const router = useRouter();
   const [user, setUser] = useState(null);
-  const [weather, setWeather] = useState(null);
-  const [weatherLoading, setWeatherLoading] = useState(true);
 
   useEffect(() => {
-    // Auth validation check
     const token = localStorage.getItem('govi_nena_token');
     const storedUser = localStorage.getItem('govi_nena_user');
     if (!token || !storedUser) {
       router.push('/login');
       return;
     }
-    
+
     try {
       const parsedUser = JSON.parse(storedUser);
       setUser(parsedUser);
     } catch (e) {
       console.error('Error parsing user storage', e);
       router.push('/login');
-      return;
-    }
-
-    // Geolocation and Weather trigger
-    const fetchWeather = async (lat, lng) => {
-      try {
-        setWeatherLoading(true);
-        const res = await fetch(`http://localhost:5000/api/weather?lat=${lat}&lng=${lng}`);
-        if (res.ok) {
-          const data = await res.json();
-          setWeather(data);
-        }
-      } catch (err) {
-        console.error('Weather retrieval error:', err);
-      } finally {
-        setWeatherLoading(false);
-      }
-    };
-
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          fetchWeather(position.coords.latitude, position.coords.longitude);
-        },
-        () => {
-          // Default to Colombo center if GPS blocked
-          fetchWeather(6.9271, 79.8612);
-        }
-      );
-    } else {
-      fetchWeather(6.9271, 79.8612);
     }
   }, [router]);
 
@@ -235,78 +201,6 @@ export default function HomePage() {
         <p className="text-xs opacity-75" style={{ margin: '2px 0 0' }}>
           {lang === 'si' ? 'රෝගය හඳුනා ගැනීමට' : 'To identify the disease'}
         </p>
-      </div>
-
-      {/* Weather Widget */}
-      <div className="px-6 pt-6">
-        <div style={{
-          background: '#fff',
-          borderRadius: '20px',
-          boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
-          padding: '16px 20px',
-          border: '1px solid #f0f0f0',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
-          {weatherLoading ? (
-            <div className="flex items-center gap-3">
-              <div style={{
-                width: '18px',
-                height: '18px',
-                borderRadius: '50%',
-                border: '2.5px solid #4CAF50',
-                borderTopColor: 'transparent',
-                animation: 'spin 1s linear infinite'
-              }}/>
-              <style jsx>{`
-                @keyframes spin {
-                  0% { transform: rotate(0deg); }
-                  100% { transform: rotate(360deg); }
-                }
-              `}</style>
-              <span className="text-sm text-gray-500 font-medium">
-                {lang === 'si' ? 'කාලගුණ දත්ත සොයමින්...' : 'Fetching weather forecast...'}
-              </span>
-            </div>
-          ) : weather ? (
-            <>
-              <div>
-                <p className="text-xs text-gray-400 font-medium" style={{ margin: 0 }}>
-                  🌤️ {lang === 'si' ? 'වත්මන් කාලගුණය' : 'Current Weather'}
-                </p>
-                <h3 className="text-2xl font-bold" style={{ color: '#1B5E20', margin: '2px 0 4px' }}>
-                  {weather.temperature}
-                </h3>
-                <p className="text-xs font-semibold" style={{ color: '#795548', margin: 0 }}>
-                  📍 {weather.locationName || (lang === 'si' ? `දිස්ත්‍රික්කය: ${user?.district || ''}` : `District: ${user?.district || ''}`)}
-                </p>
-              </div>
-              <div className="flex gap-4">
-                <div className="text-right">
-                  <p style={{ margin: 0, fontSize: '11px', color: '#888', fontWeight: '500' }}>
-                    💧 {lang === 'si' ? 'තෙතමනය' : 'Humidity'}
-                  </p>
-                  <p style={{ margin: '2px 0 0', fontSize: '13px', fontWeight: '700', color: '#333' }}>
-                    {weather.humidity}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p style={{ margin: 0, fontSize: '11px', color: '#888', fontWeight: '500' }}>
-                    💨 {lang === 'si' ? 'සුළඟ' : 'Wind'}
-                  </p>
-                  <p style={{ margin: '2px 0 0', fontSize: '13px', fontWeight: '700', color: '#333' }}>
-                    {weather.windSpeed}
-                  </p>
-                </div>
-              </div>
-            </>
-          ) : (
-            <span className="text-sm text-gray-400 font-medium">
-              {lang === 'si' ? 'කාලගුණ දත්ත ලබාගත නොහැක' : 'Weather details unavailable'}
-            </span>
-          )}
-        </div>
       </div>
 
       {/* Crop Cards */}

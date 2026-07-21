@@ -35,7 +35,8 @@ export function useModel() {
       // ── Lenient HSV Leaf Detection ─────────────────────────
       const imageData = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
       const pixels = imageData.data;
-      let leafPixels = 0;
+      let greenPixels = 0;
+      let yellowBrownPixels = 0;
       const totalPixels = canvas.width * canvas.height;
 
       for (let i = 0; i < pixels.length; i += 4) {
@@ -69,15 +70,22 @@ export function useModel() {
         const sat = s * 100;
         const val = v * 100;
 
-        // Matches green (60°-165°), yellow (35°-60°), and withered brown (10°-35°)
-        if (hue >= 10 && hue <= 165 && sat > 10 && val > 12) {
-          leafPixels++;
+        // Matches lenient green tones
+        if (hue >= 35 && hue <= 105 && sat > 15 && val > 15) {
+          greenPixels++;
+        }
+        // Matches lenient yellow/brown withered/spot tones
+        else if (hue >= 10 && hue < 35 && sat > 24 && val > 15) {
+          yellowBrownPixels++;
         }
       }
 
-      const leafRatio = leafPixels / totalPixels;
-      // Rejects non-leaf objects (laptops, walls, umbrellas) while letting actual leaves (even yellow/brown/thin paddy) pass.
-      if (leafRatio < 0.06) {
+      const greenRatio = greenPixels / totalPixels;
+      const yellowBrownRatio = yellowBrownPixels / totalPixels;
+
+      // Rejects non-plant objects (laptops, plain walls, screens, shirts)
+      // by ensuring the image has at least a basic ratio of plant-like colors.
+      if (greenRatio < 0.05 && yellowBrownRatio < 0.08) {
         tensor.dispose();
         return { disease: 'unknown', confidence: 0, gap: 0, isUncertain: true };
       }

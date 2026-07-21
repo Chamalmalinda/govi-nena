@@ -98,30 +98,26 @@ function ScanContent() {
   const [predicting, setPredicting] = useState(false);
   const [result, setResult] = useState(null);
   const [treatment, setTreatment] = useState(null);
-  const [scanCoords, setScanCoords] = useState(null);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
+  const coordsRef = useRef(null);
 
-  const logOutbreakScan = async (diseaseName, confidence) => {
-    if (diseaseName === 'unknown') return;
+  const getCoords = () => new Promise((resolve) => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => resolve([pos.coords.longitude, pos.coords.latitude]),
+        () => resolve([80.601, 7.901]),
+        { timeout: 8000, maximumAge: 30000 }
+      );
+    } else {
+      resolve([80.601, 7.901]);
+    }
+  });
 
-    const getCoords = () => {
-      return new Promise((resolve) => {
-        if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(
-            (pos) => resolve([pos.coords.longitude, pos.coords.latitude]),
-            () => resolve([80.601, 7.901])
-          );
-        } else {
-          resolve([80.601, 7.901]);
-        }
-      });
-    };
-
+  const logOutbreakScan = async (diseaseName, confidence, coords) => {
+    if (diseaseName === 'unknown' || !coords) return;
     try {
-      const coords = await getCoords();
-      setScanCoords(coords);
       const token = localStorage.getItem('govi_nena_token');
       await fetch('http://localhost:5000/api/outbreaks', {
         method: 'POST',
@@ -132,7 +128,7 @@ function ScanContent() {
         body: JSON.stringify({
           disease: diseaseName,
           crop: selectedCrop,
-          confidence: confidence,
+          confidence,
           coordinates: coords
         })
       });
@@ -168,11 +164,13 @@ function ScanContent() {
     setPredicting(true);
     stopCamera();
 
+    // GPS fetch ෙකේ image processing ෙකේ parallel ෙකේ start — result show වෙනකොට ready
+    const coordsPromise = getCoords();
+
     const reader = new FileReader();
     reader.onload = async (e) => {
       const img = new Image();
       img.onload = async () => {
-        // Generate high-resolution image for display and storage
         const highResDataUrl = await processHighResImage(img, 800);
         setCapturedImage(highResDataUrl);
 
@@ -181,18 +179,24 @@ function ScanContent() {
         canvas.width = 224;
         canvas.height = 224;
         ctx.drawImage(img, 0, 0, 224, 224);
-        
-        const prediction = await predict(canvas, selectedCrop, CROPS[selectedCrop].classes);
+
+        const [prediction, coords] = await Promise.all([
+          predict(canvas, selectedCrop, CROPS[selectedCrop].classes),
+          coordsPromise
+        ]);
+
         if (!prediction) { setPredicting(false); return; }
         const { disease: diseaseName, confidence, isUncertain } = prediction;
 
-        logOutbreakScan(diseaseName, confidence);
+        coordsRef.current = coords;
+        localStorage.setItem('govi_nena_last_scan_coords', JSON.stringify(coords));
+        logOutbreakScan(diseaseName, confidence, coords);
 
         let resultMeta;
         if (diseaseName === 'unknown') {
-          resultMeta = { 
-            disease: 'unknown', 
-            confidence, 
+          resultMeta = {
+            disease: 'unknown',
+            confidence,
             isUncertain: true,
             siName: 'හඳුනාගත නොහැකි රෝගයක්',
             enName: 'Disease Not Identified'
@@ -209,9 +213,9 @@ function ScanContent() {
           const treatmentData = await getTreatmentOffline(selectedCrop, diseaseName, lang);
           const siData = await getTreatmentOffline(selectedCrop, diseaseName, 'si');
           const enData = await getTreatmentOffline(selectedCrop, diseaseName, 'en');
-          resultMeta = { 
-            disease: diseaseName, 
-            confidence, 
+          resultMeta = {
+            disease: diseaseName,
+            confidence,
             isUncertain,
             siName: siData.name,
             enName: enData.name
@@ -235,29 +239,35 @@ function ScanContent() {
     if (!model || !videoRef.current) return;
     setPredicting(true);
     const video = videoRef.current;
-    
-    // Generate high-resolution image from video
+
     const highResDataUrl = processHighResFromVideo(video, 800);
     setCapturedImage(highResDataUrl);
     stopCamera();
 
+    // GPS fetch ෙකේ prediction ෙකේ parallel ෙකේ start — result show වෙනකොට ready
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     canvas.width = 224;
     canvas.height = 224;
     ctx.drawImage(video, 0, 0, 224, 224);
 
-    const prediction = await predict(canvas, selectedCrop, CROPS[selectedCrop].classes);
+    const [prediction, coords] = await Promise.all([
+      predict(canvas, selectedCrop, CROPS[selectedCrop].classes),
+      getCoords()
+    ]);
+
     if (!prediction) { setPredicting(false); return; }
     const { disease: diseaseName, confidence, isUncertain } = prediction;
 
-    logOutbreakScan(diseaseName, confidence);
+    coordsRef.current = coords;
+    localStorage.setItem('govi_nena_last_scan_coords', JSON.stringify(coords));
+    logOutbreakScan(diseaseName, confidence, coords);
 
     let resultMeta;
     if (diseaseName === 'unknown') {
-      resultMeta = { 
-        disease: 'unknown', 
-        confidence, 
+      resultMeta = {
+        disease: 'unknown',
+        confidence,
         isUncertain: true,
         siName: 'හඳුනාගත නොහැකි රෝගයක්',
         enName: 'Disease Not Identified'
@@ -274,9 +284,9 @@ function ScanContent() {
       const treatmentData = await getTreatmentOffline(selectedCrop, diseaseName, lang);
       const siData = await getTreatmentOffline(selectedCrop, diseaseName, 'si');
       const enData = await getTreatmentOffline(selectedCrop, diseaseName, 'en');
-      resultMeta = { 
-        disease: diseaseName, 
-        confidence, 
+      resultMeta = {
+        disease: diseaseName,
+        confidence,
         isUncertain,
         siName: siData.name,
         enName: enData.name
@@ -343,13 +353,14 @@ function ScanContent() {
   const handleViewDetails = () => {
     if (!result || !treatment) return;
     if (capturedImage) localStorage.setItem('govi_nena_last_scan_image', capturedImage);
+    const coords = coordsRef.current;
     const params = new URLSearchParams({
       disease: result.disease,
       label: treatment.name,
       confidence: String(result.confidence),
       crop: selectedCrop || '',
       isUncertain: String(!!result.isUncertain),
-      ...(scanCoords ? { lat: String(scanCoords[1]), lng: String(scanCoords[0]) } : {})
+      ...(coords ? { lat: String(coords[1]), lng: String(coords[0]) } : {})
     });
     router.push(`/scan/result-detail?${params.toString()}`);
   };
