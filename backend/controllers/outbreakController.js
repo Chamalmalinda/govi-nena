@@ -133,14 +133,140 @@ exports.createOutbreak = async (req, res) => {
 };
 
 // @route   GET /api/outbreaks
-// @desc    Get all logged outbreaks (useful for map rendering)
+// @desc    Get outbreaks near a location with optional crop and disease filters
 // @access  Public
 exports.getOutbreaks = async (req, res) => {
   try {
-    const outbreaks = await Outbreak.find().sort({ timestamp: -1 });
-    res.json(outbreaks);
+    const {
+      lat,
+      lng,
+      radius = 5,
+      disease,
+      crop,
+    } = req.query;
+
+    /*
+     * Latitude and longitude are required because this heatmap
+     * should show outbreaks near the scanned location.
+     */
+    if (!lat || !lng) {
+      return res.status(400).json({
+        message:
+          "Please provide lat and lng query parameters.",
+      });
+    }
+
+    const latitude = Number(lat);
+    const longitude = Number(lng);
+    const radiusKm = Number(radius);
+
+    if (
+      !Number.isFinite(latitude) ||
+      !Number.isFinite(longitude)
+    ) {
+      return res.status(400).json({
+        message:
+          "Latitude and longitude must be valid numbers.",
+      });
+    }
+
+    if (
+      latitude < -90 ||
+      latitude > 90 ||
+      longitude < -180 ||
+      longitude > 180
+    ) {
+      return res.status(400).json({
+        message:
+          "Latitude or longitude is outside the valid range.",
+      });
+    }
+
+    if (
+      !Number.isFinite(radiusKm) ||
+      radiusKm <= 0
+    ) {
+      return res.status(400).json({
+        message:
+          "Radius must be a positive number.",
+      });
+    }
+
+    /*
+     * Base query:
+     * Find only records within the requested radius.
+     *
+     * MongoDB requires coordinates in this order:
+     * [longitude, latitude]
+     */
+    const query = {
+      location: {
+        $near: {
+          $geometry: {
+            type: "Point",
+            coordinates: [
+              longitude,
+              latitude,
+            ],
+          },
+
+          // Convert kilometres to metres
+          $maxDistance: radiusKm * 1000,
+        },
+      },
+    };
+
+    /*
+     * Optional crop filter.
+     *
+     * Example:
+     * /api/outbreaks?...&crop=paddy
+     */
+    if (
+      crop &&
+      crop !== "all"
+    ) {
+      query.crop =
+        crop.toLowerCase();
+    }
+
+    /*
+     * Optional disease filter.
+     *
+     * Example:
+     * /api/outbreaks?...&disease=blast
+     */
+    if (
+      disease &&
+      disease !== "all"
+    ) {
+      query.disease = disease;
+    }
+
+    const outbreaks =
+      await Outbreak.find(query).limit(100);
+
+    return res.status(200).json({
+      filters: {
+        latitude,
+        longitude,
+        radiusKm,
+        crop: crop || "all",
+        disease: disease || "all",
+      },
+
+      count: outbreaks.length,
+      outbreaks,
+    });
   } catch (err) {
-    console.error('Get Outbreaks Error:', err.message);
-    res.status(500).json({ message: 'Server error retrieving outbreaks' });
+    console.error(
+      "Get Outbreaks Error:",
+      err
+    );
+
+    return res.status(500).json({
+      message:
+        "Server error retrieving outbreaks.",
+    });
   }
 };

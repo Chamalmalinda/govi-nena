@@ -1,59 +1,308 @@
-const axios = require('axios');
+const axios = require("axios");
+
+/**
+ * Converts an Open-Meteo UTC time string into a JavaScript timestamp.
+ *
+ * Open-Meteo may return a value such as:
+ * 2026-08-03T14:00
+ *
+ * Because this controller requests timezone=UTC, "Z" is added so
+ * JavaScript interprets the value as UTC rather than server-local time.
+ *
+ * @param {string | undefined | null} timeString
+ * @returns {number | null}
+ */
+function parseUtcTimestamp(timeString) {
+  if (!timeString || typeof timeString !== "string") {
+    return null;
+  }
+
+  const normalizedTime = timeString.endsWith("Z")
+    ? timeString
+    : `${timeString}Z`;
+
+  const timestamp = new Date(normalizedTime).getTime();
+
+  return Number.isNaN(timestamp) ? null : timestamp;
+}
+
+/**
+ * Finds the hourly value whose timestamp is closest to the supplied
+ * current-weather timestamp.
+ *
+ * @param {string[]} hourlyTimes
+ * @param {number[]} hourlyValues
+ * @param {string} targetTime
+ * @returns {{
+ *   value: number | null,
+ *   time: string | null,
+ *   index: number
+ * }}
+ */
+function findClosestHourlyValue(
+  hourlyTimes,
+  hourlyValues,
+  targetTime
+) {
+  if (
+    !Array.isArray(hourlyTimes) ||
+    !Array.isArray(hourlyValues) ||
+    hourlyTimes.length === 0 ||
+    hourlyValues.length === 0
+  ) {
+    return {
+      value: null,
+      time: null,
+      index: -1,
+    };
+  }
+
+  const targetTimestamp =
+    parseUtcTimestamp(targetTime) || Date.now();
+
+  let closestIndex = -1;
+  let smallestDifference = Infinity;
+
+  hourlyTimes.forEach((hourlyTime, index) => {
+    const hourlyTimestamp =
+      parseUtcTimestamp(hourlyTime);
+
+    if (hourlyTimestamp === null) {
+      return;
+    }
+
+    const difference = Math.abs(
+      hourlyTimestamp - targetTimestamp
+    );
+
+    if (difference < smallestDifference) {
+      smallestDifference = difference;
+      closestIndex = index;
+    }
+  });
+
+  if (
+    closestIndex === -1 ||
+    closestIndex >= hourlyValues.length
+  ) {
+    return {
+      value: null,
+      time: null,
+      index: -1,
+    };
+  }
+
+  return {
+    value:
+      hourlyValues[closestIndex] !== undefined
+        ? hourlyValues[closestIndex]
+        : null,
+
+    time:
+      hourlyTimes[closestIndex] || null,
+
+    index: closestIndex,
+  };
+}
+
+/**
+ * Gets a readable location name from OpenStreetMap Nominatim.
+ *
+ * Weather retrieval should still succeed if reverse geocoding fails.
+ *
+ * @param {number} latitude
+ * @param {number} longitude
+ * @returns {Promise<string>}
+ */
+async function getLocationName(
+  latitude,
+  longitude
+) {
+  try {
+    const geoResponse = await axios.get(
+      "https://nominatim.openstreetmap.org/reverse",
+      {
+        params: {
+          format: "json",
+          lat: latitude,
+          lon: longitude,
+          zoom: 12,
+          addressdetails: 1,
+        },
+
+        headers: {
+          "User-Agent": "GoviNenaBackend/1.0",
+          Accept: "application/json",
+        },
+
+        timeout: 5000,
+      }
+    );
+
+    const address =
+      geoResponse.data?.address || {};
+
+    return (
+      address.city ||
+      address.town ||
+      address.village ||
+      address.suburb ||
+      address.county ||
+      address.state ||
+      "Sri Lanka"
+    );
+  } catch (error) {
+    console.warn(
+      "Nominatim reverse geocoding failed:",
+      error.message
+    );
+
+    return "Sri Lanka";
+  }
+}
 
 // @route   GET /api/weather
-// @desc    Proxy weather request to Open-Meteo & reverse geocode coords with Nominatim
+// @desc    Get current weather and match humidity to the nearest hourly timestamp
 // @access  Public
 exports.getWeather = async (req, res) => {
-  const { lat, lng } = req.query;
+  const latitude = Number(req.query.lat);
+  const longitude = Number(req.query.lng);
 
-  if (!lat || !lng) {
-    return res.status(400).json({ message: 'Please provide lat and lng query parameters' });
+  if (
+    !Number.isFinite(latitude) ||
+    !Number.isFinite(longitude)
+  ) {
+    return res.status(400).json({
+      message:
+        "Please provide valid lat and lng query parameters.",
+    });
+  }
+
+  if (
+    latitude < -90 ||
+    latitude > 90 ||
+    longitude < -180 ||
+    longitude > 180
+  ) {
+    return res.status(400).json({
+      message:
+        "Latitude or longitude is outside the valid range.",
+    });
   }
 
   try {
-    // 1. Fetch weather metrics from Open-Meteo
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current_weather=true&hourly=relative_humidity_2m`;
-    const response = await axios.get(url);
-    const weatherData = response.data;
-    const current = weatherData.current_weather;
-    
-    let humidity = '75%'; // Default fallback
-    if (weatherData.hourly && weatherData.hourly.relative_humidity_2m) {
-      const hourlyHumidities = weatherData.hourly.relative_humidity_2m;
-      if (hourlyHumidities.length > 0) {
-        humidity = `${hourlyHumidities[0]}%`;
-      }
-    }
-
-    // 2. Fetch human-readable town/city name using OSM Nominatim Reverse Geocoding
-    let locationName = 'Sri Lanka';
-    try {
-      const geoUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=12`;
-      const geoResponse = await axios.get(geoUrl, {
-        headers: {
-          'User-Agent': 'GoviNenaBackend/1.0'
+    /*
+     * timezone=UTC ensures that current_weather.time and
+     * hourly.time use the same timezone.
+     */
+    const weatherResponse = await axios.get(
+      "https://api.open-meteo.com/v1/forecast",
+      {
+        params: {
+          latitude,
+          longitude,
+          current_weather: true,
+          hourly: "relative_humidity_2m",
+          timezone: "UTC",
+          past_days: 1,
+          forecast_days: 1,
         },
-        timeout: 3000 // 3 seconds timeout to prevent hanging requests
-      });
-      if (geoResponse.data && geoResponse.data.address) {
-        const address = geoResponse.data.address;
-        locationName = address.city || address.town || address.village || address.suburb || address.county || address.state || 'Sri Lanka';
+
+        timeout: 10000,
       }
-    } catch (geoErr) {
-      console.warn('Nominatim reverse geocoding failed, falling back to default:', geoErr.message);
+    );
+
+    const weatherData = weatherResponse.data;
+    const currentWeather =
+      weatherData.current_weather;
+
+    if (!currentWeather) {
+      return res.status(502).json({
+        message:
+          "The weather service did not return current weather data.",
+      });
     }
 
-    res.json({
-      temperature: `${current.temperature}°C`,
-      windSpeed: `${current.windspeed} km/h`,
-      humidity: humidity,
-      locationName: locationName,
-      weatherCode: current.weathercode,
-      timestamp: current.time
-    });
+    /*
+     * Match current_weather.time to the nearest entry in
+     * hourly.time, then use the humidity at that same index.
+     */
+    const humidityMatch =
+      findClosestHourlyValue(
+        weatherData.hourly?.time,
+        weatherData.hourly
+          ?.relative_humidity_2m,
+        currentWeather.time
+      );
 
-  } catch (err) {
-    console.error('Weather Proxy Error:', err.message);
-    res.status(500).json({ message: 'Server error retrieving weather forecast data' });
+    const locationName =
+      await getLocationName(
+        latitude,
+        longitude
+      );
+
+    return res.status(200).json({
+      temperature:
+        currentWeather.temperature !== undefined &&
+        currentWeather.temperature !== null
+          ? `${Math.round(
+              currentWeather.temperature
+            )}°C`
+          : null,
+
+      windSpeed:
+        currentWeather.windspeed !== undefined &&
+        currentWeather.windspeed !== null
+          ? `${Math.round(
+              currentWeather.windspeed
+            )} km/h`
+          : null,
+
+      humidity:
+        humidityMatch.value !== null
+          ? `${Math.round(
+              humidityMatch.value
+            )}%`
+          : null,
+
+      locationName,
+
+      weatherCode:
+        currentWeather.weathercode ?? null,
+
+      coordinates: {
+        latitude,
+        longitude,
+      },
+
+      /*
+       * These values make it easy to verify that the correct
+       * hourly humidity entry was selected.
+       */
+      currentWeatherTime:
+        currentWeather.time,
+
+      humidityTime:
+        humidityMatch.time,
+
+      humidityHourlyIndex:
+        humidityMatch.index,
+
+      timezone: "UTC",
+
+      timestamp:
+        new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error(
+      "Weather Proxy Error:",
+      error.response?.data ||
+        error.message
+    );
+
+    return res.status(500).json({
+      message:
+        "Server error retrieving weather forecast data.",
+    });
   }
 };

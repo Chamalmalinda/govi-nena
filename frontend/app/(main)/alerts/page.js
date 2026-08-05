@@ -1,18 +1,108 @@
-'use client';
+"use client";
 
-import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
-import { useLang } from '@/lib/LanguageContext';
+import {
+  useEffect,
+  useState,
+} from "react";
+
+import {
+  AlertTriangle,
+  ArrowLeft,
+  BellRing,
+  CalendarDays,
+  Leaf,
+  LoaderCircle,
+  MapPin,
+  Navigation,
+  ShieldCheck,
+} from "lucide-react";
+
+import {
+  GiChiliPepper,
+  GiTomato,
+  GiWheat,
+} from "react-icons/gi";
+
+import { useRouter } from "next/navigation";
+
+const alertsText = {
+  si: {
+    pageTitle: "ව්‍යාප්ති ඇඟවීම්",
+    pageTitleSub: "Spread Warnings",
+
+    changeLanguage: "භාෂාව වෙනස් කරන්න",
+    goBack: "ආපසු යන්න",
+
+    checkingArea: "පරීක්ෂා කරන ප්‍රදේශය",
+    withinRadius: "කිලෝමීටර් 10 ඇතුළත",
+    locationUnavailable: "ස්ථානය ලබාගත නොහැක",
+    findingLocation: "ස්ථානය සොයමින්...",
+
+    loading: "අනතුරු ඇඟවීම් සොයමින්...",
+
+    radius: "අරය",
+    kilometreUnit: "කි.මී.",
+
+    noAlertsTitle:
+      "ආසන්නයේ රෝග ව්‍යාප්තියක් නොමැත",
+
+    noAlertsDescription:
+      "ඔබේ ප්‍රදේශය අවට ඉහළ රෝග ව්‍යාප්ති අනතුරු ඇඟවීම් හඳුනාගෙන නොමැත. ඔබේ වගාවන් දැනට ආරක්ෂිතයි.",
+
+    fetchError:
+      "අනතුරු ඇඟවීම් ලබාගත නොහැකි විය.",
+
+    paddy: "වී",
+    tomato: "තක්කාලි",
+    chili: "මිරිස්",
+
+    gpsLocation: "GPS ස්ථානය",
+    districtLocation: "ලියාපදිංචි දිස්ත්‍රික්කය",
+  },
+
+  en: {
+    pageTitle: "Spread Warnings",
+    pageTitleSub: "ව්‍යාප්ති ඇඟවීම්",
+
+    changeLanguage: "Change language",
+    goBack: "Go back",
+
+    checkingArea: "Checking area",
+    withinRadius: "Within 10 kilometres",
+    locationUnavailable: "Location unavailable",
+    findingLocation: "Finding location...",
+
+    loading: "Searching for outbreak warnings...",
+
+    radius: "Radius",
+    kilometreUnit: "km",
+
+    noAlertsTitle: "No Outbreaks Nearby",
+
+    noAlertsDescription:
+      "No high-spread crop disease warnings have been detected near your area. Your crops are currently safe.",
+
+    fetchError:
+      "Unable to retrieve outbreak warnings.",
+
+    paddy: "Paddy",
+    tomato: "Tomato",
+    chili: "Chilli",
+
+    gpsLocation: "GPS location",
+    districtLocation: "Registered district",
+  },
+};
 
 const DISTRICT_CENTROIDS = {
   Colombo: [79.8612, 6.9271],
-  Gampaha: [79.9925, 7.0840],
+  Gampaha: [79.9925, 7.084],
   Kalutara: [79.9733, 6.5854],
-  Kandy: [80.6350, 7.2906],
+  Kandy: [80.635, 7.2906],
   Matale: [80.6234, 7.4675],
-  'Nuwara Eliya': [80.7891, 6.9497],
-  Galle: [80.2170, 6.0535],
-  Matara: [80.5000, 5.9500],
+  "Nuwara Eliya": [80.7891, 6.9497],
+  Galle: [80.217, 6.0535],
+  Matara: [80.5, 5.95],
   Hambantota: [81.1185, 6.1246],
   Jaffna: [80.0074, 9.6615],
   Mannar: [79.9142, 8.9811],
@@ -20,245 +110,706 @@ const DISTRICT_CENTROIDS = {
   Anuradhapura: [80.3947, 8.3122],
   Polonnaruwa: [81.0006, 7.9397],
   Kurunegala: [80.3647, 7.4864],
-  Puttalam: [79.8275, 8.0330],
+  Puttalam: [79.8275, 8.033],
   Badulla: [81.0556, 6.9934],
-  Monaragala: [81.3500, 6.8700],
+  Monaragala: [81.35, 6.87],
   Ratnapura: [80.4037, 6.6828],
   Kegalle: [80.3424, 7.2513],
   Trincomalee: [81.2335, 8.5873],
   Batticaloa: [81.6924, 7.7102],
-  Ampara: [81.6747, 7.2912]
+  Ampara: [81.6747, 7.2912],
+  Kilinochchi: [80.3982, 9.3803],
+  Mullaitivu: [80.8142, 9.2671],
 };
+
+const cropInformation = {
+  paddy: {
+    Icon: GiWheat,
+    iconClassName: "text-[#2E7D32]",
+    backgroundClassName: "bg-[#E8F5E9]",
+  },
+
+  tomato: {
+    Icon: GiTomato,
+    iconClassName: "text-[#D32F2F]",
+    backgroundClassName: "bg-[#FFEBEE]",
+  },
+
+  chili: {
+    Icon: GiChiliPepper,
+    iconClassName: "text-[#E65100]",
+    backgroundClassName: "bg-[#FFF3E0]",
+  },
+
+  default: {
+    Icon: Leaf,
+    iconClassName: "text-[#2E7D32]",
+    backgroundClassName: "bg-[#E8F5E9]",
+  },
+};
+
+function LanguageToggle({
+  language,
+  onToggle,
+  label,
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-label={label}
+      title={label}
+      className={`relative h-8 w-[72px] shrink-0 rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-white ${
+        language === "si"
+          ? "bg-[#4CAF50]"
+          : "bg-[#888888]"
+      }`}
+    >
+      <span
+        className={`absolute top-[3px] h-[26px] w-[26px] rounded-full bg-white shadow-[0_1px_4px_rgba(0,0,0,0.2)] transition-all duration-300 ${
+          language === "si"
+            ? "left-[3px]"
+            : "left-[43px]"
+        }`}
+      />
+
+      <span
+        className={`absolute top-[7px] select-none text-[10px] font-bold text-white transition-all duration-300 ${
+          language === "si"
+            ? "left-[33px]"
+            : "left-[8px]"
+        }`}
+      >
+        {language === "si" ? "සිං" : "EN"}
+      </span>
+    </button>
+  );
+}
+
+function formatCoordinate(value) {
+  const numericValue = Number(value);
+
+  return Number.isFinite(numericValue)
+    ? numericValue.toFixed(4)
+    : "-";
+}
+
+function formatCropName(
+  crop,
+  language
+) {
+  const normalizedCrop =
+    crop?.toLowerCase();
+
+  if (
+    normalizedCrop === "paddy" ||
+    normalizedCrop === "tomato" ||
+    normalizedCrop === "chili"
+  ) {
+    return alertsText[language][
+      normalizedCrop
+    ];
+  }
+
+  return crop || "";
+}
 
 export default function AlertsPage() {
   const router = useRouter();
-  const { lang, t } = useLang();
-  
-  const [alerts, setAlerts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [userCoords, setUserCoords] = useState(null);
 
+  const [language, setLanguage] =
+    useState("si");
+
+  const [alerts, setAlerts] =
+    useState([]);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [error, setError] =
+    useState(false);
+
+  const [userCoords, setUserCoords] =
+    useState(null);
+
+  const [
+    locationSource,
+    setLocationSource,
+  ] = useState("");
+
+  const [
+    locationName,
+    setLocationName,
+  ] = useState("");
+
+  const [
+    locationLoading,
+    setLocationLoading,
+  ] = useState(false);
+
+  const text = alertsText[language];
+
+  const apiUrl =
+    process.env.NEXT_PUBLIC_API_URL ||
+    "http://localhost:5000";
+
+  /*
+   * Restore the previously selected language.
+   */
   useEffect(() => {
-    // Auth validation check
-    const token = localStorage.getItem('govi_nena_token');
-    const storedUser = localStorage.getItem('govi_nena_user');
+    try {
+      const savedLanguage =
+        localStorage.getItem(
+          "govi_nena_language"
+        );
+
+      if (
+        savedLanguage === "si" ||
+        savedLanguage === "en"
+      ) {
+        setLanguage(savedLanguage);
+      }
+    } catch (error) {
+      console.error(
+        "Could not load language preference:",
+        error
+      );
+    }
+  }, []);
+
+  /*
+   * Get the user's location and retrieve nearby alerts.
+   */
+  useEffect(() => {
+    const token =
+      localStorage.getItem(
+        "govi_nena_token"
+      );
+
+    const storedUser =
+      localStorage.getItem(
+        "govi_nena_user"
+      );
+
     if (!token || !storedUser) {
-      router.push('/login');
+      router.replace("/login");
       return;
     }
 
-    let userObj = null;
+    let userObject = null;
+
     try {
-      userObj = JSON.parse(storedUser);
-    } catch (e) {
-      console.error(e);
+      userObject =
+        JSON.parse(storedUser);
+    } catch (error) {
+      console.error(
+        "Could not read the stored user:",
+        error
+      );
     }
 
-    const fetchAlerts = async (lat, lng) => {
+    /*
+     * Reverse-geocode GPS coordinates using the existing
+     * backend weather endpoint.
+     *
+     * If this request fails, the coordinate values remain
+     * available as a fallback.
+     */
+    const fetchLocationName = async (
+      latitude,
+      longitude
+    ) => {
+      setLocationLoading(true);
+      setLocationName("");
+
       try {
-        setLoading(true);
-        const res = await fetch(`http://localhost:5000/api/alerts?lat=${lat}&lng=${lng}`);
-        if (res.ok) {
-          const data = await res.json();
-          setAlerts(data);
+        const response = await fetch(
+          `${apiUrl}/api/weather?lat=${encodeURIComponent(
+            latitude
+          )}&lng=${encodeURIComponent(
+            longitude
+          )}`,
+          {
+            method: "GET",
+
+            headers: {
+              Accept: "application/json",
+            },
+          }
+        );
+
+        const data = await response
+          .json()
+          .catch(() => ({}));
+
+        if (!response.ok) {
+          throw new Error(
+            data.message ||
+              "Could not retrieve location name."
+          );
         }
-      } catch (err) {
-        console.error('Failed to fetch alerts:', err);
+
+        setLocationName(
+          data.locationName || ""
+        );
+      } catch (error) {
+        console.error(
+          "Could not retrieve location name:",
+          error
+        );
+
+        setLocationName("");
+      } finally {
+        setLocationLoading(false);
+      }
+    };
+
+    const fetchAlerts = async (
+      latitude,
+      longitude
+    ) => {
+      setLoading(true);
+      setError(false);
+
+      try {
+        const response = await fetch(
+          `${apiUrl}/api/alerts?lat=${encodeURIComponent(
+            latitude
+          )}&lng=${encodeURIComponent(
+            longitude
+          )}`,
+          {
+            method: "GET",
+
+            headers: {
+              Accept: "application/json",
+
+              Authorization:
+                `Bearer ${token}`,
+            },
+          }
+        );
+
+        const data = await response
+          .json()
+          .catch(() => []);
+
+        if (!response.ok) {
+          throw new Error(
+            data.message ||
+              "Unable to retrieve alerts."
+          );
+        }
+
+        if (Array.isArray(data)) {
+          setAlerts(data);
+        } else if (
+          Array.isArray(data.alerts)
+        ) {
+          setAlerts(data.alerts);
+        } else {
+          setAlerts([]);
+        }
+      } catch (error) {
+        console.error(
+          "Failed to fetch alerts:",
+          error
+        );
+
+        setAlerts([]);
+        setError(true);
       } finally {
         setLoading(false);
       }
     };
 
-    // Attempt GPS Geolocation
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          setUserCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-          fetchAlerts(pos.coords.latitude, pos.coords.longitude);
-        },
-        () => {
-          // GPS blocked: Fallback to registered district centroid coordinates
-          const district = userObj?.district || 'Matale';
-          const coords = DISTRICT_CENTROIDS[district] || [80.6234, 7.4675]; // default Matale
-          setUserCoords({ lat: coords[1], lng: coords[0] });
-          fetchAlerts(coords[1], coords[0]);
-        }
-      );
-    } else {
-      const district = userObj?.district || 'Matale';
-      const coords = DISTRICT_CENTROIDS[district] || [80.6234, 7.4675];
-      setUserCoords({ lat: coords[1], lng: coords[0] });
-      fetchAlerts(coords[1], coords[0]);
-    }
-  }, [router]);
+    /*
+     * Use the registered district when GPS access is not
+     * available or has been denied.
+     */
+    const useDistrictLocation = () => {
+      const district =
+        userObject?.district || "Matale";
 
-  const getCropEmoji = (crop) => {
-    switch (crop?.toLowerCase()) {
-      case 'paddy': return '🌾';
-      case 'tomato': return '🍅';
-      case 'chili': return '🌶️';
-      default: return '🍃';
+      const coordinates =
+        DISTRICT_CENTROIDS[district] ||
+        DISTRICT_CENTROIDS.Matale;
+
+      const longitude =
+        coordinates[0];
+
+      const latitude =
+        coordinates[1];
+
+      setUserCoords({
+        lat: latitude,
+        lng: longitude,
+      });
+
+      setLocationName(district);
+      setLocationSource("district");
+      setLocationLoading(false);
+
+      fetchAlerts(
+        latitude,
+        longitude
+      );
+    };
+
+    if (!navigator.geolocation) {
+      useDistrictLocation();
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const latitude =
+          position.coords.latitude;
+
+        const longitude =
+          position.coords.longitude;
+
+        setUserCoords({
+          lat: latitude,
+          lng: longitude,
+        });
+
+        setLocationSource("gps");
+
+        /*
+         * These requests can happen at the same time.
+         * Failure of reverse geocoding does not stop alerts.
+         */
+        fetchLocationName(
+          latitude,
+          longitude
+        );
+
+        fetchAlerts(
+          latitude,
+          longitude
+        );
+      },
+
+      (error) => {
+        console.warn(
+          "GPS location unavailable. Using registered district:",
+          error.message
+        );
+
+        useDistrictLocation();
+      },
+
+      {
+        enableHighAccuracy: false,
+        timeout: 5000,
+        maximumAge: 300000,
+      }
+    );
+  }, [router, apiUrl]);
+
+  const toggleLanguage = () => {
+    const nextLanguage =
+      language === "si"
+        ? "en"
+        : "si";
+
+    setLanguage(nextLanguage);
+
+    try {
+      localStorage.setItem(
+        "govi_nena_language",
+        nextLanguage
+      );
+    } catch (error) {
+      console.error(
+        "Could not save language preference:",
+        error
+      );
     }
   };
 
+  const displayedLocation =
+    locationName ||
+    (userCoords
+      ? `${formatCoordinate(
+          userCoords.lat
+        )}, ${formatCoordinate(
+          userCoords.lng
+        )}`
+      : text.locationUnavailable);
+
   return (
-    <div style={{ minHeight: '100vh', background: '#F9FBF7', fontFamily: 'system-ui, sans-serif', display: 'flex', flexDirection: 'column' }}>
-      
+    <main className="flex min-h-screen flex-col bg-[#F9FBF7] font-sans">
       {/* Header */}
-      <div style={{
-        background: '#1B5E20',
-        padding: 'clamp(36px, 5vw, 64px) clamp(20px, 4vw, 60px) clamp(20px, 3vw, 40px)',
-        borderRadius: '0 0 24px 24px',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-        position: 'sticky',
-        top: 0,
-        zIndex: 10
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
-          <button onClick={() => router.back()} style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', flexShrink: 0 }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M19 12H5M12 5L5 12L12 19" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
-            </svg>
+      <header className="sticky top-0 z-20 rounded-b-3xl bg-[#1B5E20] px-4 pb-5 pt-8 text-white shadow-[0_4px_20px_rgba(0,0,0,0.15)] sm:px-6">
+        <div className="mx-auto flex w-full max-w-[800px] items-center gap-3">
+          <button
+            type="button"
+            onClick={() =>
+              router.back()
+            }
+            aria-label={text.goBack}
+            title={text.goBack}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/20 text-white transition-colors hover:bg-white/30 focus:outline-none focus:ring-2 focus:ring-white"
+          >
+            <ArrowLeft
+              size={21}
+              strokeWidth={2.5}
+            />
           </button>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <h1 style={{ color: '#fff', fontSize: 'clamp(18px, 2.2vw, 26px)', fontWeight: '700', margin: 0 }}>Spread Warnings</h1>
-            <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 'clamp(12px, 1.2vw, 15px)', margin: '2px 0 0', fontWeight: '500' }}>ව්‍යාප්ති ඇඟවීම්</p>
+
+          <div className="min-w-0 flex-1">
+            <h1 className="truncate text-xl font-bold text-white sm:text-2xl">
+              {text.pageTitle}
+            </h1>
+
+            <p className="mt-0.5 truncate text-xs font-medium text-white/75">
+              {text.pageTitleSub}
+            </p>
           </div>
+
+          <LanguageToggle
+            language={language}
+            onToggle={
+              toggleLanguage
+            }
+            label={
+              text.changeLanguage
+            }
+          />
         </div>
-      </div>
+      </header>
 
-      {/* Content Container */}
-      <div style={{
-        flex: 1,
-        padding: '24px clamp(16px, 4vw, 32px)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '20px',
-        maxWidth: '800px',
-        margin: '0 auto',
-        width: '100%',
-        boxSizing: 'border-box',
-        paddingBottom: '48px'
-      }}>
-
-        {/* Location Indicator Card */}
+      {/* Main content */}
+      <section className="mx-auto flex w-full max-w-[800px] flex-1 flex-col gap-5 px-4 py-6 pb-12 sm:px-6">
+        {/* Location card */}
         {userCoords && (
-          <div style={{
-            background: '#fff',
-            borderRadius: '16px',
-            padding: '12px 18px',
-            border: '1px solid #f0f0f0',
-            boxShadow: '0 2px 12px rgba(0,0,0,0.03)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}>
-            <span style={{ fontSize: '16px' }}>📍</span>
-            <span style={{ fontSize: '13px', color: '#558B2F', fontWeight: '600' }}>
-              {lang === 'si' 
-                ? `පරීක්ෂා කරන්නේ: ${userCoords.lat.toFixed(4)}, ${userCoords.lng.toFixed(4)} අවට සීමාවයි`
-                : `Scanning within 10km of: ${userCoords.lat.toFixed(4)}, ${userCoords.lng.toFixed(4)}`}
-            </span>
-          </div>
-        )}
+          <article className="rounded-[20px] border border-[#E0E0E0] bg-white p-5 shadow-[0_4px_16px_rgba(0,0,0,0.06)]">
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#E8F5E9] text-[#1B5E20]">
+                {locationSource ===
+                "gps" ? (
+                  <Navigation
+                    size={24}
+                    strokeWidth={2.2}
+                  />
+                ) : (
+                  <MapPin
+                    size={24}
+                    strokeWidth={2.2}
+                  />
+                )}
+              </div>
 
-        {/* Warnings Alerts Feed */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          
-          {loading ? (
-            <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
-              <div style={{ width: '40px', height: '40px', borderRadius: '50%', border: '4px solid #4CAF50', borderTopColor: 'transparent', animation: 'spin 1s linear infinite' }} />
-            </div>
-          ) : alerts.length > 0 ? (
-            alerts.map((alert) => (
-              <div
-                key={alert._id}
-                style={{
-                  background: '#FFFDE7', // Warning yellow shade
-                  borderRadius: '20px',
-                  boxShadow: '0 4px 16px rgba(251,192,45,0.15)',
-                  padding: '20px',
-                  border: '1.5px solid #FBC02D',
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: '16px',
-                  position: 'relative',
-                  overflow: 'hidden'
-                }}
-              >
-                {/* Accent line on warning border */}
-                <div style={{
-                  position: 'absolute',
-                  left: 0,
-                  top: 0,
-                  bottom: 0,
-                  width: '6px',
-                  background: '#FBC02D'
-                }} />
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold text-[#795548]">
+                  {locationSource ===
+                  "gps"
+                    ? text.gpsLocation
+                    : text.districtLocation}
+                </p>
 
-                <div style={{
-                  width: '48px',
-                  height: '48px',
-                  borderRadius: '50%',
-                  background: '#FFF9C4',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '24px',
-                  flexShrink: 0
-                }}>
-                  {getCropEmoji(alert.crop)}
-                </div>
+                {locationLoading ? (
+                  <div className="mt-2 flex items-center gap-2 text-[#1B5E20]">
+                    <LoaderCircle
+                      size={17}
+                      className="animate-spin"
+                    />
 
-                <div style={{ flex: 1 }}>
-                  <h4 style={{ color: '#F57F17', margin: '0 0 6px 0', fontSize: '17px', fontWeight: '700' }}>
-                    {alert.title}
-                  </h4>
-                  <p style={{ color: '#5D4037', margin: '0 0 12px 0', fontSize: '14px', lineHeight: '1.5' }}>
-                    {alert.message}
-                  </p>
-                  
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{
-                      background: 'rgba(251,192,45,0.3)',
-                      color: '#E65100',
-                      padding: '4px 10px',
-                      borderRadius: '10px',
-                      fontSize: '11px',
-                      fontWeight: '700'
-                    }}>
-                      ⚠️ {lang === 'si' ? `${alert.radiusKm}km කලාපය` : `Radius: ${alert.radiusKm}km`}
-                    </span>
-                    <span style={{ color: '#888', fontSize: '11px', fontWeight: '500' }}>
-                      {new Date(alert.createdAt).toLocaleDateString()}
+                    <span className="text-sm font-bold">
+                      {
+                        text.findingLocation
+                      }
                     </span>
                   </div>
+                ) : (
+                  <h2 className="mt-1 break-words text-base font-bold text-[#1B5E20]">
+                    {displayedLocation}
+                  </h2>
+                )}
+
+                <div className="mt-2 flex items-center gap-2 text-xs font-semibold text-[#2E7D32]">
+                  <MapPin size={14} />
+
+                  <span>
+                    {text.checkingArea}:{" "}
+                    {text.withinRadius}
+                  </span>
                 </div>
               </div>
-            ))
-          ) : (
-            <div style={{
-              background: '#fff',
-              borderRadius: '20px',
-              padding: '48px 24px',
-              textAlign: 'center',
-              boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
-              border: '1px solid #f0f0f0'
-            }}>
-              <div style={{ fontSize: '40px', marginBottom: '12px' }}>🛡️</div>
-              <h4 style={{ color: '#1B5E20', fontSize: '18px', fontWeight: '700', margin: '0 0 8px' }}>
-                {lang === 'si' ? 'අවදානමක් හඳුනාගෙන නැත' : 'No Outbreaks Nearby'}
-              </h4>
-              <p style={{ color: '#795548', fontSize: '14px', margin: 0, lineHeight: 1.4 }}>
-                {lang === 'si' 
-                  ? 'ඔබේ ප්‍රදේශය අවට බෝග ව්‍යාප්ති අනතුරු ඇඟවීම් කිසිවක් හමුවී නොමැත. ඔබේ වගාවන් ආරක්ෂිතයි.' 
-                  : 'We have not detected any high spread of disease near you. Your crops are currently safe.'}
-              </p>
             </div>
-          )}
-        </div>
+          </article>
+        )}
 
-      </div>
-    </div>
+        {/* Error */}
+        {error && (
+          <article
+            role="alert"
+            className="flex items-start gap-3 rounded-[20px] border border-red-300 bg-red-50 p-4 text-red-700"
+          >
+            <AlertTriangle
+              size={21}
+              className="mt-0.5 shrink-0"
+            />
+
+            <p className="text-sm font-medium leading-6">
+              {text.fetchError}
+            </p>
+          </article>
+        )}
+
+        {/* Loading */}
+        {loading && (
+          <section className="flex flex-1 flex-col items-center justify-center gap-4 py-16 text-center">
+            <LoaderCircle
+              size={52}
+              strokeWidth={3}
+              className="animate-spin text-[#4CAF50]"
+            />
+
+            <p className="text-sm font-medium text-[#1B5E20]">
+              {text.loading}
+            </p>
+          </section>
+        )}
+
+        {/* Alert list */}
+        {!loading &&
+          alerts.length > 0 && (
+            <section className="flex flex-col gap-4">
+              {alerts.map((alert) => {
+                const normalizedCrop =
+                  alert.crop?.toLowerCase();
+
+                const cropData =
+                  cropInformation[
+                    normalizedCrop
+                  ] ||
+                  cropInformation.default;
+
+                const CropIcon =
+                  cropData.Icon;
+
+                return (
+                  <article
+                    key={alert._id}
+                    className="relative overflow-hidden rounded-[20px] border-2 border-[#FBC02D] bg-[#FFFDE7] p-5 pl-6 shadow-[0_4px_16px_rgba(251,192,45,0.15)]"
+                  >
+                    <div className="absolute bottom-0 left-0 top-0 w-1.5 bg-[#FBC02D]" />
+
+                    <div className="flex items-start gap-4">
+                      <div
+                        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${cropData.backgroundClassName}`}
+                      >
+                        <CropIcon
+                          size={28}
+                          className={
+                            cropData.iconClassName
+                          }
+                          aria-label={formatCropName(
+                            alert.crop,
+                            language
+                          )}
+                        />
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start gap-2">
+                          <AlertTriangle
+                            size={19}
+                            className="mt-0.5 shrink-0 text-[#F57F17]"
+                          />
+
+                          <h2 className="break-words text-base font-bold text-[#F57F17] sm:text-lg">
+                            {alert.title}
+                          </h2>
+                        </div>
+
+                        <p className="mt-2 text-sm leading-6 text-[#5D4037]">
+                          {alert.message}
+                        </p>
+
+                        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FFF3C4] px-3 py-1.5 text-[11px] font-bold text-[#E65100]">
+                              <BellRing
+                                size={13}
+                              />
+
+                              {text.radius}:{" "}
+                              {alert.radiusKm ||
+                                5}
+                              {
+                                text.kilometreUnit
+                              }
+                            </span>
+
+                            {alert.crop && (
+                              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E8F5E9] px-3 py-1.5 text-[11px] font-bold text-[#2E7D32]">
+                                <Leaf
+                                  size={13}
+                                />
+
+                                {formatCropName(
+                                  alert.crop,
+                                  language
+                                )}
+                              </span>
+                            )}
+                          </div>
+
+                          <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[#888888]">
+                            <CalendarDays
+                              size={13}
+                            />
+
+                            {new Date(
+                              alert.createdAt
+                            ).toLocaleDateString(
+                              language ===
+                                "si"
+                                ? "si-LK"
+                                : "en-LK"
+                            )}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </section>
+          )}
+
+        {/* No alerts */}
+        {!loading &&
+          alerts.length === 0 &&
+          !error && (
+            <section className="flex flex-1 items-center justify-center py-8">
+              <article className="w-full rounded-[20px] border border-[#E0E0E0] bg-white px-6 py-12 text-center shadow-[0_4px_16px_rgba(0,0,0,0.06)]">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#E8F5E9] text-[#1B5E20]">
+                  <ShieldCheck
+                    size={34}
+                    strokeWidth={2.1}
+                  />
+                </div>
+
+                <h2 className="mt-4 text-lg font-bold text-[#1B5E20]">
+                  {
+                    text.noAlertsTitle
+                  }
+                </h2>
+
+                <p className="mx-auto mt-2 max-w-[480px] text-sm leading-6 text-[#795548]">
+                  {
+                    text.noAlertsDescription
+                  }
+                </p>
+              </article>
+            </section>
+          )}
+      </section>
+    </main>
   );
 }

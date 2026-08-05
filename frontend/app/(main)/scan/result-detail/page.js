@@ -1,31 +1,232 @@
-'use client';
+"use client";
 
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useLang } from '@/lib/LanguageContext';
-import { getTreatmentOffline } from '@/lib/offlineStorage';
-import { Suspense, useState, useEffect } from 'react';
+import {Suspense,useEffect,useState,} from "react";
+import {AlertTriangle,ArrowLeft,CalendarDays,CheckCircle2,CloudSun,Droplets,Leaf,LoaderCircle,MapPin,ShieldCheck,Sprout, Thermometer,Wind,} from "lucide-react";
+import {useRouter,useSearchParams,} from "next/navigation";
+import { getTreatmentOffline } from "@/lib/offlineStorage";
 
-function LangToggle({ lang, toggleLang }) {
+const detailText = {
+  si: {
+    pageTitle: "රෝග විස්තර",
+    pageTitleSub: "Disease Details",
+    changeLanguage:
+      "භාෂාව වෙනස් කරන්න",
+    goBack: "ආපසු යන්න",
+    loading:
+      "තොරතුරු පූරණය වෙමින්...",
+    uncertainTitle:
+      "අවිනිශ්චිත ස්කෑන් ප්‍රතිඵලයකි",
+    uncertainDescription:
+      "මෙම රෝග විනිශ්චය අවිනිශ්චිත මට්ටමක පවතී. නිවැරදි රසායනික ප්‍රතිකාර භාවිතයට පෙර, වඩා හොඳ ආලෝකයකින් පත්‍රය ආසන්නයෙන් නැවත ස්කෑන් කරන්න.",
+    capturedImage:
+      "ග්‍රහණය කළ රූපය",
+    imageAlt:
+      "ස්කෑන් කළ ශාක පත්‍රය",
+    match: "ගැළපීම",
+    confidence: "විශ්වාසය",
+    symptoms: "රෝග ලක්ෂණ",
+    environmentalFactors:
+      "පාරිසරික සාධක",
+    warningSigns:
+      "අනතුරු ඇඟවීමේ ලක්ෂණ",
+    preventionTips:
+      "වැළැක්වීමේ උපදෙස්",
+    treatmentSteps:
+      "ප්‍රතිකාර පියවර",
+    temperature: "උෂ්ණත්වය",
+    humidity: "ආර්ද්‍රතාව",
+    wind: "සුළං වේගය",
+    location: "ස්ථානය",
+    season: "කාලය",
+    favorable: "හිතකර",
+    normal: "සාමාන්‍ය",
+    gpsActive: "GPS සක්‍රීයයි",
+    highHumidity:
+      "ඉහළ ආර්ද්‍රතාව",
+    moderateHumidity:
+      "මධ්‍යස්ථ ආර්ද්‍රතාව",
+    lowHumidity:
+      "අඩු ආර්ද්‍රතාව",
+    yala: "යල",
+    yalaPeriod:
+      "අප්‍රේල් - සැප්තැම්බර්",
+    warning1:
+      "කොළ කහ හෝ දුඹුරු පැහැයට හැරීම",
+    warning2:
+      "කොළ මත කළු ලප හෝ තුවාල ඇතිවීම",
+    warning3:
+      "වර්ධනය මන්දගාමී වීම හෝ මැලවීම",
+    warning4:
+      "පලතුරු හෝ ධාන්‍යවල වර්ණය වෙනස් වීම",
+    prevention1:
+      "රෝගී ශාක කොටස් නිතිපතා ඉවත් කරන්න.",
+    prevention2:
+      "ඉහළ අවදානම් කාලවලදී වැළැක්වීමේ දිලීරනාශක යොදන්න.",
+    prevention3:
+      "හැකි අවස්ථාවල රෝග-ප්‍රතිරෝධී ප්‍රභේද භාවිත කරන්න.",
+    observation: "නිරීක්ෂණය",
+    chemicalTreatment:
+      "රසායනික ප්‍රතිකාර",
+    organicTreatment:
+      "කාබනික ප්‍රතිකාර",
+    followUp: "පසු විපරම",
+    observationStep:
+      "රෝගී කොළ සහ ශාක කොටස් ඉවත් කර ආරක්ෂිතව විනාශ කරන්න.",
+    uncertainChemical:
+      "අවිනිශ්චිත ස්කෑන් ප්‍රතිඵල සඳහා රසායනික ප්‍රතිකාර නිර්දේශ නොකෙරේ. කරුණාකර නැවත ස්කෑන් කරන්න.",
+    followUpStep:
+      "සතියකට පසු ශාකවල තත්ත්වය නැවත පරීක්ෂා කරන්න.",
+    weatherUnavailable:
+      "ලබාගත නොහැක",
+  },
+
+  en: {
+    pageTitle: "Disease Details",
+    pageTitleSub: "රෝග විස්තර",
+
+    changeLanguage:
+      "Change language",
+
+    goBack: "Go Back",
+
+    loading:
+      "Loading details...",
+
+    uncertainTitle:
+      "Uncertain Scan Result",
+
+    uncertainDescription:
+      "This diagnosis is uncertain. Before applying chemical treatments, scan the leaf again from a closer distance under better lighting.",
+
+    capturedImage:
+      "Captured Image",
+
+    imageAlt:
+      "Scanned plant leaf",
+
+    match: "match",
+
+    confidence: "Confidence",
+
+    symptoms: "Symptoms",
+
+    environmentalFactors:
+      "Environmental Factors",
+
+    warningSigns:
+      "Warning Signs",
+
+    preventionTips:
+      "Prevention Tips",
+
+    treatmentSteps:
+      "Treatment Steps",
+
+    temperature: "Temperature",
+    humidity: "Humidity",
+    wind: "Wind Speed",
+    location: "Location",
+    season: "Season",
+
+    favorable: "Favourable",
+    normal: "Normal",
+
+    gpsActive: "GPS Active",
+
+    highHumidity:
+      "High Humidity",
+
+    moderateHumidity:
+      "Moderate Humidity",
+
+    lowHumidity:
+      "Low Humidity",
+
+    yala: "Yala",
+
+    yalaPeriod:
+      "April - September",
+
+    warning1:
+      "Yellowing or browning of leaves",
+
+    warning2:
+      "Dark spots or lesions on foliage",
+
+    warning3:
+      "Stunted growth or wilting",
+
+    warning4:
+      "Fruit or grain discolouration",
+
+    prevention1:
+      "Remove infected plant debris regularly.",
+
+    prevention2:
+      "Apply preventive fungicide during high-risk periods.",
+
+    prevention3:
+      "Use disease-resistant crop varieties when available.",
+
+    observation: "Observation",
+
+    chemicalTreatment:
+      "Chemical Treatment",
+
+    organicTreatment:
+      "Organic Treatment",
+
+    followUp: "Follow-up",
+
+    observationStep:
+      "Remove and safely destroy infected leaves and plant parts.",
+
+    uncertainChemical:
+      "Chemical recommendations are withheld for uncertain scans. Please scan again.",
+
+    followUpStep:
+      "Re-inspect the plants after one week for improvement.",
+
+    weatherUnavailable:
+      "Unavailable",
+  },
+};
+
+function LanguageToggle({
+  language,
+  onToggle,
+  label,
+}) {
   return (
-    <button onClick={toggleLang} style={{
-      width: '72px', height: '32px', borderRadius: '16px',
-      background: lang === 'si' ? '#4CAF50' : '#888',
-      position: 'relative', border: 'none', cursor: 'pointer',
-      transition: 'background 0.3s', flexShrink: 0,
-    }}>
-      <div style={{
-        width: '26px', height: '26px', borderRadius: '50%', background: '#fff',
-        position: 'absolute', top: '3px',
-        left: lang === 'si' ? '3px' : '43px',
-        transition: 'left 0.3s',
-        boxShadow: '0 1px 4px rgba(0,0,0,0.2)'
-      }} />
-      <span style={{
-        position: 'absolute', fontSize: '10px', fontWeight: '700', color: '#fff',
-        left: lang === 'si' ? '33px' : '8px',
-        top: '7px', transition: 'left 0.3s', userSelect: 'none'
-      }}>
-        {lang === 'si' ? 'සිං' : 'EN'}
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-label={label}
+      title={label}
+      className={`relative h-8 w-[72px] shrink-0 rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-white ${
+        language === "si"
+          ? "bg-[#4CAF50]"
+          : "bg-[#888888]"
+      }`}
+    >
+      <span
+        className={`absolute top-[3px] h-[26px] w-[26px] rounded-full bg-white shadow-[0_1px_4px_rgba(0,0,0,0.2)] transition-all duration-300 ${
+          language === "si"
+            ? "left-[3px]"
+            : "left-[43px]"
+        }`}
+      />
+
+      <span
+        className={`absolute top-[7px] select-none text-[10px] font-bold text-white transition-all duration-300 ${
+          language === "si"
+            ? "left-[33px]"
+            : "left-[8px]"
+        }`}
+      >
+        {language === "si"
+          ? "සිං"
+          : "EN"}
       </span>
     </button>
   );
@@ -33,346 +234,895 @@ function LangToggle({ lang, toggleLang }) {
 
 function ResultDetailContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const { lang, toggleLang, t } = useLang();
-
-  const diseaseName = searchParams.get('disease') || '';
-  const confidence = searchParams.get('confidence') || '0';
-  const crop = searchParams.get('crop') || '';
-  const isUncertain = searchParams.get('isUncertain') === 'true';
-  const lat = searchParams.get('lat');
-  const lng = searchParams.get('lng');
-
-  const [image, setImage] = useState('');
+  const searchParams =useSearchParams();
+  const diseaseName =searchParams.get("disease") || "";
+  const confidence =searchParams.get("confidence") ||"0";
+  const crop =searchParams.get("crop") || "";
+  const isUncertain =searchParams.get("isUncertain") === "true";
+  const latitude =searchParams.get("lat");
+  const longitude =searchParams.get("lng");
+  const [language, setLanguage] =useState("si");
+  const [image, setImage] =useState("");
   const [treatment, setTreatment] = useState(null);
-  const [weather, setWeather] = useState(null);
+  const [weather, setWeather] =useState(null);
+  const [weatherLoading,setWeatherLoading,] = useState(true);
+  const text =detailText[language];
+  const apiUrl =process.env.NEXT_PUBLIC_API_URL ||
+    "http://localhost:5000";
 
-  // Restore captured scan image
+  /*
+   * Restore selected language and captured image.
+   */
   useEffect(() => {
-    const stored = localStorage.getItem('govi_nena_last_scan_image');
-    if (stored) setImage(stored);
+    try {
+      const savedLanguage =
+        localStorage.getItem(
+          "govi_nena_language"
+        );
+
+      if (
+        savedLanguage === "si" ||
+        savedLanguage === "en"
+      ) {
+        setLanguage(savedLanguage);
+      }
+
+      const storedImage =
+        localStorage.getItem(
+          "govi_nena_last_scan_image"
+        );
+
+      if (storedImage) {
+        setImage(storedImage);
+      }
+    } catch (error) {
+      console.error(
+        "Could not restore result details:",
+        error
+      );
+    }
   }, []);
 
-  // Fetch offline treatment description
+  /*
+   * Reload treatment information whenever the selected
+   * language changes.
+   */
   useEffect(() => {
-    if (!crop || !diseaseName) return;
-    getTreatmentOffline(crop, diseaseName, lang).then(data => setTreatment(data));
-  }, [crop, diseaseName, lang]);
+    if (!crop || !diseaseName) {
+      return;
+    }
 
-  // Fetch actual weather using coords
+    getTreatmentOffline(
+      crop,
+      diseaseName,
+      language
+    )
+      .then((data) => {
+        setTreatment(data);
+      })
+      .catch((error) => {
+        console.error(
+          "Could not load treatment:",
+          error
+        );
+      });
+  }, [
+    crop,
+    diseaseName,
+    language,
+  ]);
+
+  /*
+   * Retrieve current weather using the scan coordinates.
+   *
+   * The backend now matches humidity to the nearest hourly
+   * timestamp before returning it.
+   */
   useEffect(() => {
-    const fetchWeather = async () => {
-      const queryLat = lat || '6.9271'; // default Colombo fallback
-      const queryLng = lng || '79.8612';
-      try {
-        const res = await fetch(`http://localhost:5000/api/weather?lat=${queryLat}&lng=${queryLng}`);
-        if (res.ok) {
-          const data = await res.json();
+    const controller =
+      new AbortController();
+
+    const fetchWeather =
+      async () => {
+        const queryLatitude =
+          latitude || "6.9271";
+
+        const queryLongitude =
+          longitude || "79.8612";
+
+        setWeatherLoading(true);
+
+        try {
+          const response = await fetch(
+            `${apiUrl}/api/weather?lat=${encodeURIComponent(
+              queryLatitude
+            )}&lng=${encodeURIComponent(
+              queryLongitude
+            )}`,
+            {
+              method: "GET",
+
+              headers: {
+                Accept:
+                  "application/json",
+              },
+
+              signal:
+                controller.signal,
+            }
+          );
+
+          const data =
+            await response
+              .json()
+              .catch(() => ({}));
+
+          if (!response.ok) {
+            throw new Error(
+              data.message ||
+                "Unable to retrieve weather information."
+            );
+          }
+
           setWeather(data);
+
+          /*
+           * This development log lets you verify that the
+           * humidity time is close to currentWeatherTime.
+           */
+          console.log(
+            "Weather timestamp match:",
+            {
+              currentWeatherTime:
+                data.currentWeatherTime,
+
+              humidityTime:
+                data.humidityTime,
+
+              humidityHourlyIndex:
+                data.humidityHourlyIndex,
+
+              humidity:
+                data.humidity,
+            }
+          );
+        } catch (error) {
+          if (
+            error.name ===
+            "AbortError"
+          ) {
+            return;
+          }
+
+          console.error(
+            "Could not load weather details:",
+            error
+          );
+
+          setWeather(null);
+        } finally {
+          if (
+            !controller.signal.aborted
+          ) {
+            setWeatherLoading(false);
+          }
         }
-      } catch (err) {
-        console.error('Weather detail fetch error:', err);
-      }
-    };
+      };
 
     fetchWeather();
-  }, [lat, lng]);
 
-  const handleShare = () => {
-    if (navigator.share && treatment) {
-      navigator.share({
-        title: `${treatment.name} - Govi Nena`,
-        text: `Detected ${treatment.name} with ${confidence}% confidence.`,
-        url: window.location.href
-      });
+    return () => {
+      controller.abort();
+    };
+  }, [
+    latitude,
+    longitude,
+    apiUrl,
+  ]);
+
+  const toggleLanguage = () => {
+    const nextLanguage =
+      language === "si"
+        ? "en"
+        : "si";
+
+    setLanguage(nextLanguage);
+
+    try {
+      localStorage.setItem(
+        "govi_nena_language",
+        nextLanguage
+      );
+    } catch (error) {
+      console.error(
+        "Could not save language preference:",
+        error
+      );
     }
   };
 
-  const envFactors = [
-    { icon: '🌡️', label: 'Temperature', value: weather ? weather.temperature : '...', status: t.detail_favorable, color: '#4CAF50' },
-    { icon: '💧', label: 'Humidity', value: weather ? weather.humidity : '...', status: t.detail_high_risk, color: '#E65100' },
-    { icon: '💨', label: 'Wind', value: weather ? weather.windSpeed : '...', status: t.detail_normal, color: '#1565C0' },
-    { icon: '📍', label: lang === 'si' ? 'ස්ථානය' : 'Location', value: weather ? weather.locationName : '...', status: 'GPS Active', color: '#2E7D32' },
-    { icon: '📅', label: t.detail_season, value: 'Yala', status: 'Apr - Sep', color: '#795548' },
+  const weatherValue = (
+    value,
+    fallback =
+      text.weatherUnavailable
+  ) => {
+    if (weatherLoading) {
+      return "...";
+    }
+
+    return value || fallback;
+  };
+
+  /*
+   * Converts a value such as "82%" into 82 and returns
+   * a suitable status instead of always displaying
+   * "High Risk".
+   */
+  const getHumidityStatus = (
+    humidityValue
+  ) => {
+    const numericHumidity =
+      Number.parseFloat(
+        String(
+          humidityValue || ""
+        ).replace("%", "")
+      );
+
+    if (
+      !Number.isFinite(
+        numericHumidity
+      )
+    ) {
+      return {
+        label:
+          text.weatherUnavailable,
+
+        className:
+          "text-[#888888]",
+      };
+    }
+
+    if (numericHumidity >= 80) {
+      return {
+        label:
+          text.highHumidity,
+
+        className:
+          "text-[#E65100]",
+      };
+    }
+
+    if (numericHumidity >= 60) {
+      return {
+        label:
+          text.moderateHumidity,
+
+        className:
+          "text-[#795548]",
+      };
+    }
+
+    return {
+      label:
+        text.lowHumidity,
+
+      className:
+        "text-[#2E7D32]",
+    };
+  };
+
+  const humidityStatus =
+    getHumidityStatus(
+      weather?.humidity
+    );
+
+  const environmentalFactors = [
+    {
+      id: "temperature",
+
+      Icon: Thermometer,
+
+      label:
+        text.temperature,
+
+      value: weatherValue(
+        weather?.temperature
+      ),
+
+      status:
+        text.favorable,
+
+      statusClassName:
+        "text-[#4CAF50]",
+
+      iconClassName:
+        "text-[#E65100]",
+
+      iconBackground:
+        "bg-[#FFF3E0]",
+    },
+
+    {
+      id: "humidity",
+
+      Icon: Droplets,
+
+      label:
+        text.humidity,
+
+      value: weatherValue(
+        weather?.humidity
+      ),
+
+      status:
+        humidityStatus.label,
+
+      statusClassName:
+        humidityStatus.className,
+
+      iconClassName:
+        "text-blue-600",
+
+      iconBackground:
+        "bg-blue-50",
+    },
+
+    {
+      id: "wind",
+
+      Icon: Wind,
+
+      label:
+        text.wind,
+
+      value: weatherValue(
+        weather?.windSpeed
+      ),
+
+      status:
+        text.normal,statusClassName:
+        "text-blue-700",
+
+      iconClassName:
+        "text-blue-700",
+
+      iconBackground:
+        "bg-blue-50",
+    },
+
+    {
+      id: "location",
+
+      Icon: MapPin,
+
+      label:
+        text.location,
+
+      value: weatherValue(
+        weather?.locationName
+      ),
+
+      status:
+        text.gpsActive,
+
+      statusClassName:
+        "text-[#2E7D32]",
+
+      iconClassName:
+        "text-[#2E7D32]",
+
+      iconBackground:
+        "bg-[#E8F5E9]",
+    },
+
+    {
+      id: "season",
+
+      Icon: CalendarDays,
+
+      label:
+        text.season,
+
+      value:
+        text.yala,
+
+      status:
+        text.yalaPeriod,
+
+      statusClassName:
+        "text-[#795548]",
+
+      iconClassName:
+        "text-[#795548]",
+
+      iconBackground:
+        "bg-[#F5F0ED]",
+    },
   ];
 
-  const warningSigns = [t.detail_warning1, t.detail_warning2, t.detail_warning3, t.detail_warning4];
+  const warningSigns = [
+    text.warning1,
+    text.warning2,
+    text.warning3,
+    text.warning4,
+  ];
 
-  const preventionTips = treatment ? [
-    treatment.prevention,
-    t.detail_prev1,
-    t.detail_prev2,
-    t.detail_prev3,
-  ] : [];
+  const preventionTips =
+    treatment
+      ? [
+          treatment.prevention,
+          text.prevention1,
+          text.prevention2,
+          text.prevention3,
+        ]
+      : [];
 
-  const treatmentSteps = treatment ? [
-    t.detail_step1,
-    isUncertain ? (lang === 'si' ? 'අවිනිශ්චිත ස්කෑන් පරීක්ෂණ සඳහා රසායනික ප්‍රතිකාර නිර්දේශ නොකෙරේ. කරුණාකර නැවත ස්කෑන් කරන්න.' : 'Chemical recommendations are withheld for uncertain scans. Please scan again.') : treatment.chemical,
-    treatment.organic,
-    t.detail_step4,
-  ] : [];
+  const treatmentSteps =
+    treatment
+      ? [
+          {
+            label:
+              text.observation,
+
+            value:
+              text.observationStep,
+
+            headingClassName:
+              "text-[#795548]",
+
+            Icon: Leaf,
+          },
+
+          {
+            label:
+              text.chemicalTreatment,
+
+            value: isUncertain
+              ? text.uncertainChemical
+              : treatment.chemical,
+
+            headingClassName:
+              "text-blue-700",
+
+            Icon: CloudSun,
+          },
+
+          {
+            label:
+              text.organicTreatment,
+
+            value:
+              treatment.organic,
+
+            headingClassName:
+              "text-[#2E7D32]",
+
+            Icon: Sprout,
+          },
+
+          {
+            label:
+              text.followUp,
+
+            value:
+              text.followUpStep,
+
+            headingClassName:
+              "text-[#E65100]",
+
+            Icon: CheckCircle2,
+          },
+        ]
+      : [];
 
   if (!treatment) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F9FBF7' }}>
-        <div style={{ width: '60px', height: '60px', borderRadius: '50%', border: '4px solid #4CAF50', borderTopColor: 'transparent' }} />
-      </div>
+      <main className="flex min-h-screen items-center justify-center bg-[#F9FBF7]">
+        <div className="flex flex-col items-center gap-3 text-[#1B5E20]">
+          <LoaderCircle
+            size={52}
+            strokeWidth={3}
+            className="animate-spin text-[#4CAF50]"
+          />
+
+          <p className="text-sm font-medium">
+            {text.loading}
+          </p>
+        </div>
+      </main>
     );
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#F9FBF7', fontFamily: 'system-ui, sans-serif', display: 'flex', flexDirection: 'column' }}>
-
-      {/* Sticky Green Header */}
-      <div style={{
-        background: '#1B5E20',
-        padding: 'clamp(36px, 5vw, 64px) clamp(20px, 4vw, 60px) clamp(20px, 3vw, 40px)',
-        borderRadius: '0 0 24px 24px',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-        position: 'sticky',
-        top: 0,
-        zIndex: 10
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
-          <button onClick={() => router.back()} style={{ width: 'clamp(40px, 4vw, 56px)', height: 'clamp(40px, 4vw, 56px)', borderRadius: '50%', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', flexShrink: 0 }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M19 12H5M12 5L5 12L12 19" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
-            </svg>
+    <main className="min-h-screen bg-[#F9FBF7] font-sans">
+      {/* Header */}
+      <header className="sticky top-0 z-20 rounded-b-3xl bg-[#1B5E20] px-4 pb-5 pt-8 shadow-[0_4px_20px_rgba(0,0,0,0.15)] sm:px-6">
+        <div className="mx-auto flex w-full max-w-[800px] items-center gap-3">
+          <button
+            type="button"
+            onClick={() =>
+              router.back()
+            }
+            aria-label={
+              text.goBack
+            }
+            title={text.goBack}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/20 text-white transition-colors hover:bg-white/30 focus:outline-none focus:ring-2 focus:ring-white"
+          >
+            <ArrowLeft
+              size={21}
+              strokeWidth={2.5}
+            />
           </button>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <h1 style={{ color: '#fff', fontSize: 'clamp(18px, 2.2vw, 26px)', fontWeight: '700', margin: 0 }}>Disease Details</h1>
-            <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 'clamp(12px, 1.2vw, 15px)', margin: '2px 0 0', fontWeight: '500' }}>රෝග විස්තර</p>
+
+          <div className="min-w-0 flex-1">
+            <h1 className="truncate text-xl font-bold text-white sm:text-2xl">
+              {text.pageTitle}
+            </h1>
+
+            <p className="mt-0.5 truncate text-xs font-medium text-white/75">
+              {text.pageTitleSub}
+            </p>
           </div>
-          <LangToggle lang={lang} toggleLang={toggleLang} />
-          <button onClick={handleShare} style={{ width: 'clamp(44px, 4.5vw, 60px)', height: 'clamp(44px, 4.5vw, 60px)', borderRadius: '50%', background: '#FDD835', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', flexShrink: 0, boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-              <circle cx="18" cy="5" r="3" stroke="#1B5E20" strokeWidth="2.5" />
-              <circle cx="6" cy="12" r="3" stroke="#1B5E20" strokeWidth="2.5" />
-              <circle cx="18" cy="19" r="3" stroke="#1B5E20" strokeWidth="2.5" />
-              <path d="M8.59 13.51L15.42 17.49M15.41 6.51L8.59 10.49" stroke="#1B5E20" strokeWidth="2.5" />
-            </svg>
-          </button>
+
+          <LanguageToggle
+            language={language}
+            onToggle={
+              toggleLanguage
+            }
+            label={
+              text.changeLanguage
+            }
+          />
         </div>
-      </div>
+      </header>
 
-      {/* Main Content Area */}
-      <div style={{
-        flex: 1,
-        padding: 'clamp(20px, 3vw, 48px) clamp(16px, 4vw, 32px)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '20px',
-        maxWidth: '800px',
-        margin: '0 auto',
-        width: '100%',
-        boxSizing: 'border-box',
-        paddingBottom: '48px'
-      }}>
-
-        {/* Uncertain Warning Banner */}
+      <section className="mx-auto flex w-full max-w-[800px] flex-col gap-5 px-4 py-6 pb-12 sm:px-6">
         {isUncertain && (
-          <div style={{
-            background: '#FFFDE7',
-            border: '1.5px solid #FBC02D',
-            borderRadius: '20px',
-            padding: '20px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '16px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
-          }}>
-            <div style={{
-              width: '48px', height: '48px', borderRadius: '50%', background: '#FFF9C4',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
-            }}>
-              <span style={{ fontSize: '24px' }}>⚠️</span>
+          <article className="flex items-start gap-4 rounded-[20px] border-2 border-[#FBC02D] bg-[#FFFDE7] p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#FFF9C4] text-[#F57F17]">
+              <AlertTriangle
+                size={25}
+              />
             </div>
+
             <div>
-              <h4 style={{ color: '#F57F17', margin: '0 0 4px 0', fontSize: 'clamp(14px, 1.2vw, 18px)', fontWeight: '700' }}>
-                {lang === 'si' ? 'අවිනිශ්චිත ස්කෑන් පරීක්ෂණයකි' : 'Uncertain Scan Result'}
-              </h4>
-              <p style={{ color: '#5D4037', margin: 0, fontSize: 'clamp(12px, 1vw, 15px)', lineHeight: '1.4' }}>
-                {lang === 'si'
-                  ? `මෙම රෝග විනිශ්චය 30% - 59% අතර අවිනිශ්චිත මට්ටමක පවතී. නිවැරදි රසායනික ප්‍රතිකාර භාවිතයට පෙර, වඩාත් හොඳ ආලෝකයකින් පත්‍රය ලඟට කර නැවත ස්කෑන් කිරීමට කාරුණික වන්න.`
-                  : `This match is uncertain (30% - 59% confidence). Before applying chemical treatments, please scan again closer to the leaf under better lighting.`
+              <h2 className="font-bold text-[#F57F17]">
+                {
+                  text.uncertainTitle
+                }
+              </h2>
+
+              <p className="mt-1 text-sm leading-6 text-[#5D4037]">
+                {
+                  text.uncertainDescription
                 }
               </p>
             </div>
-          </div>
+          </article>
         )}
 
-        {/* Captured Image Card */}
         {image && (
-          <div style={{ background: '#fff', borderRadius: '20px', boxShadow: '0 4px 16px rgba(0,0,0,0.08)', padding: '20px' }}>
-            <h3 style={{ color: '#1B5E20', fontSize: 'clamp(15px, 1.5vw, 18px)', fontWeight: '600', marginBottom: '14px', marginTop: 0 }}>
-              Captured Image / ග්‍රහණය කළ රූපය
-            </h3>
-            <div style={{
-              position: 'relative',
-              borderRadius: '16px',
-              overflow: 'hidden',
-              maxHeight: '320px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: '#f4f6f0',
-              boxShadow: 'inset 0 0 10px rgba(0,0,0,0.05)'
-            }}>
-              <img src={image} alt="captured" style={{
-                maxWidth: '100%',
-                maxHeight: '320px',
-                width: 'auto',
-                height: 'auto',
-                objectFit: 'contain',
-                display: 'block'
-              }} />
-              <div style={{ position: 'absolute', top: '12px', right: '12px', background: 'rgba(0,0,0,0.65)', color: '#fff', padding: '4px 14px', borderRadius: '20px', fontSize: 'clamp(11px, 1vw, 14px)', fontWeight: '500' }}>
-                {confidence}% match
-              </div>
+          <article className="rounded-[20px] border border-[#E0E0E0] bg-white p-5 shadow-[0_4px_16px_rgba(0,0,0,0.08)]">
+            <h2 className="mb-3 font-semibold text-[#1B5E20]">
+              {
+                text.capturedImage
+              }
+            </h2>
+
+            <div className="relative flex max-h-[320px] items-center justify-center overflow-hidden rounded-2xl bg-[#F4F6F0] shadow-inner">
+              <img
+                src={image}
+                alt={text.imageAlt}
+                className="max-h-[320px] max-w-full object-contain"
+              />
+
+              <span className="absolute right-3 top-3 rounded-full bg-black/65 px-3 py-1 text-xs font-medium text-white">
+                {confidence}%{" "}
+                {text.match}
+              </span>
             </div>
-          </div>
+          </article>
         )}
 
-        {/* Disease Details Header Card */}
-        <div style={{ background: '#fff', borderRadius: '20px', boxShadow: '0 4px 16px rgba(0,0,0,0.08)', padding: '20px 24px' }}>
-          <h2 style={{ color: '#1B5E20', fontSize: 'clamp(22px, 3vw, 32px)', fontWeight: '700', margin: '0 0 4px 0', fontFamily: 'system-ui, sans-serif' }}>
+        {/* Disease summary */}
+        <article className="rounded-[20px] border border-[#E0E0E0] bg-white px-6 py-5 shadow-[0_4px_16px_rgba(0,0,0,0.08)]">
+          <h2 className="text-2xl font-bold text-[#1B5E20] sm:text-3xl">
             {treatment.name}
           </h2>
-          <p style={{ color: '#795548', fontSize: 'clamp(16px, 1.8vw, 20px)', fontWeight: '600', margin: '0 0 20px 0' }}>
-            {diseaseName}
-          </p>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: 'clamp(12px, 1vw, 14px)' }}>
-            <span style={{ color: '#888', fontWeight: '500' }}>Confidence / විශ්වාසය</span>
-            <span style={{ color: '#333', fontWeight: '700' }}>{confidence}%</span>
-          </div>
-          <div style={{ height: '10px', background: '#e8e8e8', borderRadius: '8px', overflow: 'hidden' }}>
-            <div style={{ height: '100%', borderRadius: '8px', transition: 'width 0.6s ease', background: '#4CAF50', width: `${confidence}%` }} />
-          </div>
-        </div>
 
-        {/* Symptoms / Description Card */}
-        <div style={{ background: '#fff', borderRadius: '20px', boxShadow: '0 4px 16px rgba(0,0,0,0.08)', padding: '20px 24px' }}>
-          <h3 style={{ color: '#1B5E20', fontSize: 'clamp(15px, 1.5vw, 18px)', fontWeight: '600', margin: '0 0 12px 0' }}>
-            {t.detail_symptoms}
-          </h3>
-          <p style={{ color: '#555', fontSize: 'clamp(14px, 1.2vw, 17px)', lineHeight: 1.6, margin: 0 }}>
+          <p className="mt-1 break-words text-base font-semibold text-[#795548] sm:text-lg">
+            {diseaseName
+              .replaceAll(
+                "___",
+                " - "
+              )
+              .replaceAll(
+                "_",
+                " "
+              )}
+          </p>
+
+          <div className="mt-5 flex items-center justify-between text-sm">
+            <span className="font-medium text-[#888888]">
+              {text.confidence}
+            </span>
+
+            <span className="font-bold text-gray-800">
+              {confidence}%
+            </span>
+          </div>
+
+          <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-[#E8E8E8]">
+            <div
+              className="h-full rounded-full bg-[#4CAF50] transition-all duration-700"
+              style={{
+                width: `${Math.min(
+                  Number(
+                    confidence
+                  ),
+                  100
+                )}%`,
+              }}
+            />
+          </div>
+        </article>
+
+        {/* Symptoms */}
+        <article className="rounded-[20px] border border-[#E0E0E0] bg-white px-6 py-5 shadow-[0_4px_16px_rgba(0,0,0,0.08)]">
+          <div className="mb-3 flex items-center gap-2 text-[#1B5E20]">
+            <Leaf
+              size={20}
+              strokeWidth={2.2}
+            />
+
+            <h2 className="font-semibold">
+              {text.symptoms}
+            </h2>
+          </div>
+
+          <p className="text-sm leading-7 text-[#555555] sm:text-base">
             {treatment.symptoms}
           </p>
-        </div>
+        </article>
 
-        {/* Environmental Factors Card */}
-        <div style={{ background: '#fff', borderRadius: '20px', boxShadow: '0 4px 16px rgba(0,0,0,0.08)', padding: '20px 24px' }}>
-          <h3 style={{ color: '#1B5E20', fontSize: 'clamp(15px, 1.5vw, 18px)', fontWeight: '600', margin: '0 0 16px 0' }}>
-            {t.detail_env}
-          </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '16px' }}>
-            {envFactors.map((f, i) => (
-              <div key={i} style={{ background: '#F9FBF7', borderRadius: '16px', padding: '16px', border: '1px solid #f0f4ef' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '20px' }}>{f.icon}</span>
-                  <span style={{ color: '#795548', fontSize: '12px', fontWeight: '500' }}>{f.label}</span>
-                </div>
-                <p style={{ color: '#1B5E20', fontSize: '18px', fontWeight: '700', margin: '0 0 4px' }}>{f.value}</p>
-                <p style={{ color: f.color, fontSize: '12px', margin: 0, fontWeight: '600' }}>{f.status}</p>
-              </div>
-            ))}
+        {/* Environmental factors */}
+        <article className="rounded-[20px] border border-[#E0E0E0] bg-white px-6 py-5 shadow-[0_4px_16px_rgba(0,0,0,0.08)]">
+          <div className="mb-4 flex items-center gap-2 text-[#1B5E20]">
+            <CloudSun
+              size={21}
+              strokeWidth={2.2}
+            />
+
+            <h2 className="font-semibold">
+              {
+                text.environmentalFactors
+              }
+            </h2>
           </div>
-        </div>
 
-        {/* Warning Signs Banner Card */}
-        <div style={{ background: '#fff', borderRadius: '20px', boxShadow: '0 4px 16px rgba(0,0,0,0.08)', padding: '20px 24px' }}>
-          <div style={{ background: '#FFFDE7', border: '1.5px solid #FBC02D', borderRadius: '16px', padding: '16px' }}>
-            <h4 style={{ color: '#F57F17', margin: '0 0 10px 0', fontSize: 'clamp(14px, 1.2vw, 17px)', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span>⚠️</span> {t.detail_warning}
-            </h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {warningSigns.map((sign, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                  <span style={{ color: '#F57F17', fontSize: '14px', flexShrink: 0, marginTop: '2px' }}>•</span>
-                  <p style={{ color: '#5D4037', fontSize: 'clamp(12px, 1vw, 15px)', lineHeight: '1.4', margin: 0 }}>{sign}</p>
-                </div>
-              ))}
+          <div className="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2 sm:grid-cols-3">
+            {environmentalFactors.map(
+              (factor) => {
+                const FactorIcon =
+                  factor.Icon;
+
+                return (
+                  <div
+                    key={factor.id}
+                    className="rounded-2xl border border-[#F0F4EF] bg-[#F9FBF7] p-4"
+                  >
+                    <div className="mb-3 flex items-center gap-2">
+                      <div
+                        className={`flex h-9 w-9 items-center justify-center rounded-xl ${factor.iconBackground}`}
+                      >
+                        <FactorIcon
+                          size={19}
+                          strokeWidth={2}
+                          className={
+                            factor.iconClassName
+                          }
+                        />
+                      </div>
+
+                      <span className="text-xs font-medium text-[#795548]">
+                        {
+                          factor.label
+                        }
+                      </span>
+                    </div>
+
+                    <p className="break-words text-lg font-bold text-[#1B5E20]">
+                      {
+                        factor.value
+                      }
+                    </p>
+
+                    <p
+                      className={`mt-1 text-xs font-semibold ${factor.statusClassName}`}
+                    >
+                      {
+                        factor.status
+                      }
+                    </p>
+                  </div>
+                );
+              }
+            )}
+          </div>
+        </article>
+
+        {/* Warning signs */}
+        <article className="rounded-[20px] border border-[#E0E0E0] bg-white p-5 shadow-[0_4px_16px_rgba(0,0,0,0.08)]">
+          <div className="rounded-2xl border-2 border-[#FBC02D] bg-[#FFFDE7] p-4">
+            <div className="mb-3 flex items-center gap-2 text-[#F57F17]">
+              <AlertTriangle
+                size={20}
+                strokeWidth={2.2}
+              />
+
+              <h2 className="font-bold">
+                {
+                  text.warningSigns
+                }
+              </h2>
+            </div>
+
+            <div className="flex flex-col gap-2.5">
+              {warningSigns.map(
+                (warning) => (
+                  <div
+                    key={warning}
+                    className="flex items-start gap-3"
+                  >
+                    <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[#F57F17]" />
+
+                    <p className="text-sm leading-6 text-[#5D4037]">
+                      {warning}
+                    </p>
+                  </div>
+                )
+              )}
             </div>
           </div>
-        </div>
+        </article>
 
-        {/* Prevention Tips Card */}
-        <div style={{ background: '#fff', borderRadius: '20px', boxShadow: '0 4px 16px rgba(0,0,0,0.08)', padding: '20px 24px' }}>
-          <h3 style={{ color: '#1B5E20', fontSize: 'clamp(15px, 1.5vw, 18px)', fontWeight: '600', margin: '0 0 16px 0' }}>
-            {t.detail_prevention}
-          </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {preventionTips.map((tip, i) => (
-              <div key={i} style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-                <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#E8F5E9', color: '#1B5E20', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: '700', flexShrink: 0, marginTop: '2px' }}>
-                  {i + 1}
-                </div>
-                <p style={{ color: '#555', fontSize: 'clamp(13px, 1.2vw, 16px)', lineHeight: 1.5, margin: 0, paddingTop: '4px' }}>{tip}</p>
-              </div>
-            ))}
+        {/* Prevention */}
+        <article className="rounded-[20px] border border-[#E0E0E0] bg-white px-6 py-5 shadow-[0_4px_16px_rgba(0,0,0,0.08)]">
+          <div className="mb-4 flex items-center gap-2 text-[#1B5E20]">
+            <ShieldCheck
+              size={21}
+              strokeWidth={2.2}
+            />
+
+            <h2 className="font-semibold">
+              {
+                text.preventionTips
+              }
+            </h2>
           </div>
-        </div>
 
-        {/* Treatment Steps Card */}
-        <div style={{ background: '#fff', borderRadius: '20px', boxShadow: '0 4px 16px rgba(0,0,0,0.08)', padding: '20px 24px' }}>
-          <h3 style={{ color: '#1B5E20', fontSize: 'clamp(15px, 1.5vw, 18px)', fontWeight: '600', margin: '0 0 16px 0' }}>
-            {t.detail_treatment}
-          </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {[
-              { label: lang === 'si' ? 'නිරීක්ෂණය / Observation' : 'Observation / නිරීක්ෂණය', text: treatmentSteps[0], color: '#795548' },
-              { label: lang === 'si' ? 'රසායනික ප්‍රතිකාර / Chemical Treatment' : 'Chemical Treatment / රසායනික ප්‍රතිකාර', text: treatmentSteps[1], color: '#1565C0' },
-              { label: lang === 'si' ? 'කාබනික ප්‍රතිකාර / Organic Treatment' : 'Organic Treatment / කාබනික ප්‍රතිකාර', text: treatmentSteps[2], color: '#2E7D32' },
-              { label: lang === 'si' ? 'පසු විපරම / Follow-up' : 'Follow-up / පසු විපරම', text: treatmentSteps[3], color: '#E65100' }
-            ].map((s, index) => (
-              <div key={index} style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', justifyContent: 'space-between', paddingBottom: index < 3 ? '16px' : '0', borderBottom: index < 3 ? '1px solid #f0f0f0' : 'none' }}>
-                <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', flex: 1 }}>
-                  <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#4CAF50', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: '700', flexShrink: 0, marginTop: '2px' }}>
+          <div className="flex flex-col gap-4">
+            {preventionTips.map(
+              (tip, index) => (
+                <div
+                  key={`${tip}-${index}`}
+                  className="flex items-start gap-3"
+                >
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#E8F5E9] text-sm font-bold text-[#1B5E20]">
                     {index + 1}
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <p style={{ color: s.color, fontSize: 'clamp(12px, 1vw, 15px)', fontWeight: '600', margin: '0 0 4px 0' }}>
-                      {s.label}
-                    </p>
-                    <p style={{ color: '#555', fontSize: 'clamp(13px, 1.2vw, 16px)', lineHeight: 1.5, margin: 0 }}>
-                      {s.text}
-                    </p>
-                  </div>
+
+                  <p className="pt-1 text-sm leading-6 text-[#555555] sm:text-base">
+                    {tip}
+                  </p>
                 </div>
-              </div>
-            ))}
+              )
+            )}
           </div>
-        </div>
+        </article>
 
-        {/* Back Button */}
-        <button onClick={() => router.back()} style={{
-          background: 'transparent',
-          border: '2px solid #2E7D32',
-          borderRadius: '20px',
-          padding: '16px',
-          color: '#2E7D32',
-          fontWeight: '600',
-          fontSize: 'clamp(15px, 1.5vw, 18px)',
-          cursor: 'pointer',
-          width: '100%',
-          fontFamily: 'inherit',
-          transition: 'background 0.2s'
-        }}>
-          {t.detail_back}
+        {/* Treatment steps */}
+        <article className="rounded-[20px] border border-[#E0E0E0] bg-white px-6 py-5 shadow-[0_4px_16px_rgba(0,0,0,0.08)]">
+          <div className="mb-5 flex items-center gap-2 text-[#1B5E20]">
+            <Sprout
+              size={21}
+              strokeWidth={2.2}
+            />
+
+            <h2 className="font-semibold">
+              {
+                text.treatmentSteps
+              }
+            </h2>
+          </div>
+
+          <div className="flex flex-col">
+            {treatmentSteps.map(
+              (step, index) => {
+                const StepIcon =
+                  step.Icon;
+
+                return (
+                  <div
+                    key={step.label}
+                    className={`flex items-start gap-4 ${
+                      index <
+                      treatmentSteps.length -
+                        1
+                        ? "mb-4 border-b border-[#F0F0F0] pb-4"
+                        : ""
+                    }`}
+                  >
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#4CAF50] text-white">
+                      <StepIcon
+                        size={18}
+                        strokeWidth={2}
+                      />
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <h3
+                        className={`text-sm font-semibold ${step.headingClassName}`}
+                      >
+                        {
+                          step.label
+                        }
+                      </h3>
+
+                      <p className="mt-1 text-sm leading-6 text-[#555555] sm:text-base">
+                        {
+                          step.value
+                        }
+                      </p>
+                    </div>
+                  </div>
+                );
+              }
+            )}
+          </div>
+        </article>
+
+        {/* Back */}
+        <button
+          type="button"
+          onClick={() =>
+            router.back()
+          }
+          className="flex w-full items-center justify-center gap-2 rounded-[20px] border-2 border-[#2E7D32] bg-transparent px-5 py-4 font-semibold text-[#2E7D32] transition-colors hover:bg-[#E8F5E9] focus:outline-none focus:ring-2 focus:ring-[#4CAF50]"
+        >
+          <ArrowLeft
+            size={19}
+            strokeWidth={2.2}
+          />
+
+          {text.goBack}
         </button>
+      </section>
+    </main>
+  );
+}
 
-      </div>
-    </div>
+function ResultDetailLoadingFallback() {
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-[#F9FBF7]">
+      <LoaderCircle
+        size={56}
+        strokeWidth={3}
+        className="animate-spin text-[#4CAF50]"
+        aria-label="Loading"
+      />
+    </main>
   );
 }
 
 export default function ResultDetailPage() {
   return (
-    <Suspense fallback={
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F9FBF7' }}>
-        <div style={{ width: '60px', height: '60px', borderRadius: '50%', border: '4px solid #4CAF50', borderTopColor: 'transparent' }} />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <ResultDetailLoadingFallback />
+      }
+    >
       <ResultDetailContent />
     </Suspense>
   );

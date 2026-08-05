@@ -1,290 +1,507 @@
-'use client';
+"use client";
 
-import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
-import { useLang } from '@/lib/LanguageContext';
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import {
+  
+  Bell,
+  ChevronRight,
+  
+  Home,
+  Leaf,
+  LoaderCircle,
+  LogOut,
+  MapPinned,
+  UserRound,
 
-function PaddyIcon() {
-  return (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1B5E20" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M2 22C2 22 10 18 12 12M12 12C14 6 22 2 22 2" />
-      <path d="M12 12C9 9 5 8 5 8M12 12C15 15 16 19 16 19" />
-      <path d="M8 15C6 13 3 12 3 12M16 9C18 11 21 12 21 12" />
-    </svg>
-  );
-}
+} from "lucide-react";
 
-function TomatoIcon() {
-  return (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#B71C1C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 21C16.9706 21 21 16.9706 21 12C21 7.02944 16.9706 3 12 3C7.02944 3 3 7.02944 3 12C3 16.9706 7.02944 21 12 21Z" />
-      <path d="M12 3C11.5 1.8 12.5 1.8 12 3" />
-      <path d="M9 3.5C10 4.5 11 4.2 12 3C13 4.2 14 4.5 15 3.5" />
-    </svg>
-  );
-}
+import {
+  GiTomato,
+  GiWheat,
+  GiChiliPepper,
+} from "react-icons/gi";
+import {
+  showSuccess,
+} from "@/lib/toast";
+const homeText = {
+  si: {
+    welcome: "ආයුබෝවන්",
+    appName: "ගොවි නැණ",
+    selectCrop: "ඔබේ බෝගය තෝරන්න",
+    selectCropSubtitle: "රෝගය හඳුනා ගැනීමට",
+    tapToScan: "රෝග හඳුනා ගැනීමට තට්ටු කරන්න",
 
-function ChiliIcon() {
-  return (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#E65100" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M16 3C14 3.5 12 5 10 8C7.5 11.5 6 16 8 19C10 22 13 22 15 19C17.5 15.5 18 10 18 6C18 4 17 3.5 16 3Z" />
-      <path d="M16 3C16.8 2.2 18.5 1.5 18.5 1.5" />
-    </svg>
-  );
-}
+    paddy: "වී",
+    tomato: "තක්කාලි",
+    chilli: "මිරිස්",
+
+    footerMessage: "රෝග හඳුනාගෙන ප්‍රතිකාර සොයන්න",
+
+    home: "මුල",
+    map: "සිතියම",
+    alerts: "ඇඟවීම්",
+
+    logoutTitle: "ගිණුමෙන් පිටවන්න",
+    changeLanguage: "භාෂාව වෙනස් කරන්න",
+
+    loading: "පූරණය වෙමින්...",
+    userError: "පරිශීලක තොරතුරු කියවිය නොහැක.",
+  },
+
+  en: {
+    welcome: "Welcome",
+    appName: "Govi Nena",
+    selectCrop: "Select your crop",
+    selectCropSubtitle: "To identify the disease",
+    tapToScan: "Tap to scan and diagnose",
+
+    paddy: "Paddy",
+    tomato: "Tomato",
+    chilli: "Chilli",
+
+    footerMessage: "Identify diseases and find treatments",
+
+    home: "Home",
+    map: "Map",
+    alerts: "Alerts",
+
+    logoutTitle: "Sign out of your account",
+    changeLanguage: "Change language",
+
+    loading: "Loading...",
+    userError: "Unable to read user information.",
+  },
+};
+
+const crops = [
+  {
+    id: "paddy",
+    translationKey: "paddy",
+    Icon: GiWheat,
+
+    borderColor: "border-[#E8F5E9]",
+    backgroundColor: "bg-white",
+
+    overlayColor:
+      "bg-gradient-to-br from-[#1B5E20] to-[#4CAF50]",
+
+    iconBackground: "bg-[#E8F5E9]",
+    iconColor: "text-[#1B5E20]",
+
+    titleColor: "text-[#1B5E20]",
+    arrowColor: "text-[#1B5E20]",
+  },
+
+  {
+    id: "tomato",
+    translationKey: "tomato",
+    Icon: GiTomato,
+
+    borderColor: "border-[#FFEBEE]",
+    backgroundColor: "bg-white",
+
+    overlayColor:
+      "bg-gradient-to-br from-[#B71C1C] to-[#EF5350]",
+
+    iconBackground: "bg-[#FFEBEE]",
+    iconColor: "text-[#B71C1C]",
+
+    titleColor: "text-[#1B5E20]",
+    arrowColor: "text-[#B71C1C]",
+  },
+
+  {
+    id: "chili",
+    translationKey: "chilli",
+    Icon: GiChiliPepper,
+
+    borderColor: "border-[#FFF3E0]",
+    backgroundColor: "bg-white",
+
+    overlayColor:
+      "bg-gradient-to-br from-[#E65100] to-[#FF9800]",
+
+    iconBackground: "bg-[#FFF3E0]",
+    iconColor: "text-[#E65100]",
+
+    titleColor: "text-[#1B5E20]",
+    arrowColor: "text-[#E65100]",
+  },
+];
 
 export default function HomePage() {
-  const { lang, toggleLang } = useLang();
   const router = useRouter();
+
+  const [language, setLanguage] = useState("si");
   const [user, setUser] = useState(null);
+  const [pageLoading, setPageLoading] = useState(true);
+  const [pageError, setPageError] = useState("");
+
+  const text = homeText[language];
 
   useEffect(() => {
-    const token = localStorage.getItem('govi_nena_token');
-    const storedUser = localStorage.getItem('govi_nena_user');
-    if (!token || !storedUser) {
-      router.push('/login');
-      return;
-    }
-
     try {
+      const savedLanguage = localStorage.getItem(
+        "govi_nena_language"
+      );
+
+      if (savedLanguage === "si" || savedLanguage === "en") {
+        setLanguage(savedLanguage);
+      }
+
+      const token = localStorage.getItem("govi_nena_token");
+      const storedUser = localStorage.getItem("govi_nena_user");
+
+      if (!token || !storedUser) {
+        router.replace("/login");
+        return;
+      }
+
       const parsedUser = JSON.parse(storedUser);
       setUser(parsedUser);
-    } catch (e) {
-      console.error('Error parsing user storage', e);
-      router.push('/login');
+    } catch (error) {
+      console.error("Could not load user information:", error);
+
+      setPageError(homeText[language].userError);
+
+      localStorage.removeItem("govi_nena_token");
+      localStorage.removeItem("govi_nena_user");
+
+      router.replace("/login");
+    } finally {
+      setPageLoading(false);
     }
   }, [router]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('govi_nena_token');
-    localStorage.removeItem('govi_nena_user');
-    router.push('/login');
+  const toggleLanguage = () => {
+    const nextLanguage = language === "si" ? "en" : "si";
+
+    setLanguage(nextLanguage);
+
+    try {
+      localStorage.setItem(
+        "govi_nena_language",
+        nextLanguage
+      );
+    } catch (error) {
+      console.error(
+        "Could not save the selected language:",
+        error
+      );
+    }
   };
 
-  const crops = [
+  const handleLogout = () => {
+  localStorage.removeItem("govi_nena_token");
+  localStorage.removeItem("govi_nena_user");
+
+  showSuccess(
+    language === "si"
+      ? "සාර්ථකව ඉවත් විය!"
+      : "Logged out successfully!"
+  );
+
+  setTimeout(() => {
+    router.push("/login");
+  }, 1000);
+};
+
+  const handleCropSelection = (cropId) => {
+    router.push(`/scan?crop=${cropId}`);
+  };
+
+  const navigationItems = [
     {
-      id: 'paddy',
-      si: 'වී', en: 'Paddy',
-      icon: <PaddyIcon />,
-      gradient: 'linear-gradient(135deg, #1B5E20, #4CAF50)',
-      light: '#E8F5E9',
-      stroke: '#1B5E20'
+      label: text.home,
+      path: "/home",
+      Icon: Home,
+      active: true,
     },
     {
-      id: 'tomato',
-      si: 'තක්කාලි', en: 'Tomato',
-      icon: <TomatoIcon />,
-      gradient: 'linear-gradient(135deg, #B71C1C, #EF5350)',
-      light: '#FFEBEE',
-      stroke: '#B71C1C'
+      label: text.map,
+      path: "/heatmap",
+      Icon: MapPinned,
+      active: false,
     },
     {
-      id: 'chili',
-      si: 'මිරිස්', en: 'Chili',
-      icon: <ChiliIcon />,
-      gradient: 'linear-gradient(135deg, #E65100, #FF9800)',
-      light: '#FFF3E0',
-      stroke: '#E65100'
+      label: text.alerts,
+      path: "/alerts",
+      Icon: Bell,
+      active: false,
     },
   ];
 
+  if (pageLoading) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#F9FBF7]">
+        <div className="flex flex-col items-center gap-3 text-[#1B5E20]">
+          <LoaderCircle
+            size={44}
+            strokeWidth={2}
+            className="animate-spin"
+          />
+
+          <p className="text-sm font-medium">
+            {text.loading}
+          </p>
+        </div>
+      </main>
+    );
+  }
+
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#F9FBF7', fontFamily: 'system-ui, sans-serif' }}>
-
+    <main className="flex min-h-screen flex-col bg-[#F9FBF7] font-sans">
       {/* Header */}
-      <div className="px-6 pt-10 pb-6 rounded-b-2xl text-white"
-        style={{ background: '#1B5E20', boxShadow: '0 4px 20px rgba(0,0,0,0.15)' }}>
-
-        {/* Top row - User + Lang toggle + Logout */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full flex items-center justify-center"
-              style={{ background: 'rgba(255,255,255,0.2)' }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="8" r="4" fill="white"/>
-                <path d="M4 20C4 17 7.6 14 12 14C16.4 14 20 17 20 20" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
+      <header className="rounded-b-2xl bg-[#1B5E20] px-6 pb-6 pt-10 text-white shadow-[0_4px_20px_rgba(0,0,0,0.15)]">
+        {/* User, language toggle and logout */}
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/20">
+              <UserRound
+                size={20}
+                strokeWidth={2}
+                className="text-white"
+                aria-hidden="true"
+              />
             </div>
-            <div>
-              <p className="text-sm opacity-90" style={{ margin: 0 }}>
-                {lang === 'si' ? 'ආයුබෝවන්' : 'Welcome'}, {user ? user.name : ''}
+
+            <div className="min-w-0">
+              <p className="truncate text-sm text-white/90">
+                {text.welcome}
+                {user?.name ? `, ${user.name}` : ""}
               </p>
+
+              {user?.district && (
+                <p className="mt-0.5 truncate text-[11px] text-white/65">
+                  {user.district}
+                </p>
+              )}
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            {/* Language Toggle */}
+
+          <div className="flex shrink-0 items-center gap-2">
+            {/* Language toggle */}
             <button
-              onClick={toggleLang}
-              style={{
-                width: '72px', height: '32px', borderRadius: '16px',
-                background: lang === 'si' ? '#4CAF50' : '#888',
-                position: 'relative', border: 'none', cursor: 'pointer',
-                transition: 'background 0.3s',
-              }}
+              type="button"
+              onClick={toggleLanguage}
+              aria-label={text.changeLanguage}
+              title={text.changeLanguage}
+              className={`relative h-8 w-[72px] rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-white ${
+                language === "si"
+                  ? "bg-[#4CAF50]"
+                  : "bg-[#888888]"
+              }`}
             >
-              <div style={{
-                width: '26px', height: '26px', borderRadius: '50%', background: '#fff',
-                position: 'absolute', top: '3px',
-                left: lang === 'si' ? '3px' : '43px',
-                transition: 'left 0.3s',
-                boxShadow: '0 1px 4px rgba(0,0,0,0.2)'
-              }}/>
-              <span style={{
-                position: 'absolute', fontSize: '10px', fontWeight: '700', color: '#fff',
-                left: lang === 'si' ? '33px' : '8px',
-                top: '7px', transition: 'left 0.3s', userSelect: 'none'
-              }}>
-                {lang === 'si' ? 'සිං' : 'EN'}
+              <span
+                className={`absolute top-[3px] h-[26px] w-[26px] rounded-full bg-white shadow-[0_1px_4px_rgba(0,0,0,0.2)] transition-all duration-300 ${
+                  language === "si"
+                    ? "left-[3px]"
+                    : "left-[43px]"
+                }`}
+              />
+
+              <span
+                className={`absolute top-[7px] select-none text-[10px] font-bold text-white transition-all duration-300 ${
+                  language === "si"
+                    ? "left-[33px]"
+                    : "left-[8px]"
+                }`}
+              >
+                {language === "si" ? "සිං" : "EN"}
               </span>
             </button>
+
             {/* Logout */}
             <button
+              type="button"
               onClick={handleLogout}
-              className="flex items-center justify-center"
-              style={{
-                width: '36px', height: '36px', borderRadius: '10px',
-                background: 'rgba(255,255,255,0.2)', border: 'none', cursor: 'pointer'
-              }}
+              aria-label={text.logoutTitle}
+              title={text.logoutTitle}
+              className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-white/20 text-white transition-colors hover:bg-white/30 focus:outline-none focus:ring-2 focus:ring-white"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <path d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M16 17L21 12L16 7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M21 12H9" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+              <LogOut
+                size={18}
+                strokeWidth={2}
+              />
             </button>
           </div>
         </div>
 
-        {/* App title row */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center"
-              style={{ background: '#4CAF50' }}>
-              <svg width="28" height="28" viewBox="0 0 80 80" fill="none">
-                <path d="M40 10C40 10 20 25 20 42C20 54 28 63 40 68C52 63 60 54 60 42C60 25 40 10 40 10Z" fill="white" opacity="0.9"/>
-                <circle cx="40" cy="42" r="10" fill="#1B5E20"/>
-              </svg>
+        {/* Application title and actions */}
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#4CAF50]">
+              <Leaf
+                size={28}
+                strokeWidth={2.2}
+                className="text-white"
+                aria-hidden="true"
+              />
             </div>
-            <div>
-              <h1 className="text-2xl font-bold" style={{ margin: 0 }}>
-                {lang === 'si' ? 'ගොවි නැණ' : 'Govi Nena'}
-              </h1>
-            </div>
+
+            <h1 className="truncate text-2xl font-bold">
+              {text.appName}
+            </h1>
           </div>
-          <div className="flex gap-2">
-            {/* Alerts */}
+
+          <div className="flex shrink-0 gap-2">
             <button
-              onClick={() => router.push('/alerts')}
-              style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer' }}
+              type="button"
+              onClick={() => router.push("/alerts")}
+              aria-label={text.alerts}
+              title={text.alerts}
+              className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-white/20 text-white transition-colors hover:bg-white/30 focus:outline-none focus:ring-2 focus:ring-white"
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M18 8A6 6 0 0 0 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-                <path d="M13.73 21C13.5542 21.3031 13.3019 21.5547 12.9982 21.7295C12.6946 21.9044 12.3504 21.9965 12 21.9965C11.6496 21.9965 11.3054 21.9044 11.0018 21.7295C10.6982 21.5547 10.4458 21.3031 10.27 21" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
+              <Bell
+                size={20}
+                strokeWidth={2}
+              />
             </button>
-            {/* Map */}
+
             <button
-              onClick={() => router.push('/heatmap')}
-              style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer' }}
+              type="button"
+              onClick={() => router.push("/heatmap")}
+              aria-label={text.map}
+              title={text.map}
+              className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-white/20 text-white transition-colors hover:bg-white/30 focus:outline-none focus:ring-2 focus:ring-white"
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M12 2C8.13 2 5 5.13 5 9C5 14.25 12 22 12 22C12 22 19 14.25 19 9C19 5.13 15.87 2 12 2Z" stroke="white" strokeWidth="2"/>
-                <circle cx="12" cy="9" r="3" stroke="white" strokeWidth="2"/>
-              </svg>
+              <MapPinned
+                size={20}
+                strokeWidth={2}
+              />
             </button>
           </div>
         </div>
 
-        <p className="text-lg font-semibold opacity-90" style={{ margin: 0 }}>
-          {lang === 'si' ? 'ඔබේ බෝගය තෝරන්න' : 'Select your crop'}
-        </p>
-        <p className="text-xs opacity-75" style={{ margin: '2px 0 0' }}>
-          {lang === 'si' ? 'රෝගය හඳුනා ගැනීමට' : 'To identify the disease'}
-        </p>
-      </div>
+        <h2 className="text-lg font-semibold text-white/90">
+          {text.selectCrop}
+        </h2>
 
-      {/* Crop Cards */}
-      <div className="flex-1 px-6 py-6 flex flex-col gap-4">
-        {crops.map((crop) => (
-          <button
-            key={crop.id}
-            onClick={() => router.push(`/scan?crop=${crop.id}`)}
-            className="relative overflow-hidden rounded-2xl text-left transition-all hover:scale-[1.01]"
-            style={{
-              background: '#fff',
-              boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
-              padding: '16px 20px',
-              border: '1px solid #f0f0f0',
-              cursor: 'pointer'
-            }}
-          >
-            {/* Background gradient overlay */}
-            <div style={{
-              position: 'absolute', inset: 0,
-              background: crop.gradient,
-              opacity: 0.05,
-              borderRadius: 16
-            }} />
-            <div className="relative flex items-center gap-4">
-              <div style={{
-                width: '48px', height: '48px', borderRadius: '12px',
-                background: crop.light,
-                display: 'flex', alignItems: 'center',
-                justifyContent: 'center', flexShrink: 0
-              }}>
-                {crop.icon}
+        <p className="mt-0.5 text-xs text-white/75">
+          {text.selectCropSubtitle}
+        </p>
+      </header>
+
+      {/* Error */}
+      {pageError && (
+        <div
+          role="alert"
+          className="mx-6 mt-4 rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm font-medium text-red-700"
+        >
+          {pageError}
+        </div>
+      )}
+
+      {/* Crop cards */}
+      <section className="flex flex-1 flex-col gap-4 px-6 py-6">
+        {crops.map((crop) => {
+          const CropIcon = crop.Icon;
+
+          return (
+            <button
+              key={crop.id}
+              type="button"
+              onClick={() =>
+                handleCropSelection(crop.id)
+              }
+              className={`group relative w-full overflow-hidden rounded-2xl border px-5 py-4 text-left shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01] focus:outline-none focus:ring-2 focus:ring-[#4CAF50] focus:ring-offset-2 ${crop.backgroundColor} ${crop.borderColor}`}
+            >
+              {/* Light gradient overlay */}
+              <div
+                className={`pointer-events-none absolute inset-0 rounded-2xl opacity-[0.05] ${crop.overlayColor}`}
+              />
+
+              <div className="relative flex items-center gap-4">
+                <div
+                  className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${crop.iconBackground}`}
+                >
+                  <CropIcon
+                    size={28}
+                    strokeWidth={2.5}
+                    className={crop.iconColor}
+                    aria-hidden="true"
+                  />
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <h3
+                    className={`text-lg font-bold ${crop.titleColor}`}
+                  >
+                    {text[crop.translationKey]}
+                  </h3>
+
+                  <p className="mt-0.5 text-xs text-[#795548]">
+                    {text.tapToScan}
+                  </p>
+                </div>
+
+                <ChevronRight
+                  size={24}
+                  strokeWidth={2.5}
+                  className={`shrink-0 transition-transform duration-200 group-hover:translate-x-1 ${crop.arrowColor}`}
+                  aria-hidden="true"
+                />
               </div>
-              <div className="flex-1">
-                <h2 className="text-lg font-bold" style={{ color: '#1B5E20', margin: 0 }}>
-                  {lang === 'si' ? crop.si : crop.en}
-                </h2>
-                <p className="text-xs" style={{ color: '#795548', margin: '2px 0 0' }}>
-                  {lang === 'si' ? 'රෝග හඳුනා ගැනීමට තට්ටු කරන්න' : 'Tap to scan and diagnose'}
-                </p>
-              </div>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
-                <path d="M9 5L16 12L9 19" stroke={crop.stroke} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </div>
-          </button>
-        ))}
-      </div>
+            </button>
+          );
+        })}
+      </section>
 
-      {/* Footer */}
-      <div className="px-6 py-3 text-center" style={{ background: '#4CAF50' }}>
-        <p className="text-white text-sm font-medium" style={{ margin: 0 }}>
-          {lang === 'si' ? 'රෝග හඳුනාගෙන ප්‍රතිකාර සොයන්න' : 'Identify diseases and find treatments'}
+      {/* Green information strip */}
+      <section className="bg-[#4CAF50] px-6 py-3 text-center">
+        <p className="text-sm font-medium text-white">
+          {text.footerMessage}
         </p>
-      </div>
+      </section>
 
-      {/* Bottom Nav */}
-      <div className="flex justify-around items-center px-6 py-3"
-        style={{ background: '#fff', borderTop: '1px solid #e0e0e0' }}>
-        {[
-          { icon: 'M2 9L12 4L22 9V20H15V14H9V20H2V9Z', label: lang === 'si' ? 'මුල' : 'Home', active: true, path: '/home' },
-          { icon: 'M12 2C8.686 2 6 4.686 6 8C6 12.5 12 22 12 22C12 22 18 12.5 18 8C18 4.686 15.314 2 12 2ZM12 11C10.343 11 9 9.657 9 8C9 6.343 10.343 5 12 5C13.657 5 15 6.343 15 8C15 9.657 13.657 11 12 11Z', label: lang === 'si' ? 'ස්කෑන්' : 'Scan', active: false, path: '/scan' },
-          { icon: 'M12 2C8.13 2 5 5.13 5 9C5 14.25 12 22 12 22C12 22 19 14.25 19 9C19 5.13 15.87 2 12 2ZM12 11.5C10.62 11.5 9.5 10.38 9.5 9C9.5 7.62 10.62 6.5 12 6.5C13.38 6.5 14.5 7.62 14.5 9C14.5 10.38 13.38 11.5 12 11.5Z', label: lang === 'si' ? 'සිතියම' : 'Map', active: false, path: '/heatmap' },
-          { icon: 'M18 8A6 6 0 0 0 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8M13.73 21C13.5542 21.3031 13.3019 21.5547 12.9982 21.7295C12.6946 21.9044 12.3504 21.9965 12 21.9965C11.6496 21.9965 11.3054 21.9044 11.0018 21.7295C10.6982 21.5547 10.4458 21.3031 10.27 21', label: lang === 'si' ? 'ඇඟවීම්' : 'Alerts', active: false, path: '/alerts' },
-        ].map((item, i) => (
-          <button key={i} onClick={() => router.push(item.path)}
-            className="flex flex-col items-center gap-1"
-            style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-            <div style={{
-              width: '32px', height: '32px', borderRadius: '50%',
-              background: item.active ? '#E8F5E9' : 'transparent',
-              display: 'flex', alignItems: 'center', justifyContent: 'center'
-            }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <path d={item.icon} stroke={item.active ? '#2E7D32' : '#bbb'} strokeWidth="1.8" strokeLinecap="round"/>
-              </svg>
-            </div>
-            <span style={{ fontSize: '10px', color: item.active ? '#2E7D32' : '#bbb', fontWeight: item.active ? '600' : '400' }}>
-              {item.label}
-            </span>
-          </button>
-        ))}
-      </div>
+      {/* Bottom navigation — Scan removed */}
+      <nav
+        aria-label="Main navigation"
+        className="sticky bottom-0 grid grid-cols-3 border-t border-[#E0E0E0] bg-white px-6 py-3 shadow-[0_-3px_12px_rgba(0,0,0,0.04)]"
+      >
+        {navigationItems.map((item) => {
+          const NavigationIcon = item.Icon;
 
-    </div>
+          return (
+            <button
+              key={item.path}
+              type="button"
+              onClick={() => router.push(item.path)}
+              aria-current={item.active ? "page" : undefined}
+              className="flex flex-col items-center gap-1 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4CAF50]"
+            >
+              <span
+                className={`flex h-8 w-8 items-center justify-center rounded-full ${
+                  item.active
+                    ? "bg-[#E8F5E9]"
+                    : "bg-transparent"
+                }`}
+              >
+                <NavigationIcon
+                  size={18}
+                  strokeWidth={1.8}
+                  className={
+                    item.active
+                      ? "text-[#2E7D32]"
+                      : "text-[#BBBBBB]"
+                  }
+                />
+              </span>
+
+              <span
+                className={`text-[10px] ${
+                  item.active
+                    ? "font-semibold text-[#2E7D32]"
+                    : "font-normal text-[#BBBBBB]"
+                }`}
+              >
+                {item.label}
+              </span>
+            </button>
+          );
+        })}
+      </nav>
+    </main>
   );
 }

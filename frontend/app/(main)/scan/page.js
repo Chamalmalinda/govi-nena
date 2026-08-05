@@ -1,789 +1,2071 @@
-'use client';
+"use client";
 
-import { useState, useRef, useEffect, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useModel } from '@/hooks/useModel';
-import { getTreatmentOffline } from '@/lib/offlineStorage';
-import { useLang } from '@/lib/LanguageContext';
+import {
+  Suspense,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+
+import {
+  AlertTriangle,
+  ArrowLeft,
+  Camera,
+  CheckCircle2,
+  ChevronRight,
+  CircleHelp,
+  ImagePlus,
+  LoaderCircle,
+  MapPinned,
+  RefreshCw,
+  Speaker,
+  X,
+} from "lucide-react";
+
+import {
+  GiChiliPepper,
+  GiTomato,
+  GiWheat,
+} from "react-icons/gi";
+
+import {
+  useRouter,
+  useSearchParams,
+} from "next/navigation";
+
+import { useModel } from "@/hooks/useModel";
+import { getTreatmentOffline } from "@/lib/offlineStorage";
+
+const scanText = {
+  si: {
+    changeLanguage: "භාෂාව වෙනස් කරන්න",
+
+    onlyScanLeaves: "පත්‍ර පමණක් ස්කෑන් කරන්න",
+    placeLeaf: "රෝගී කොළය රාමුව ඇතුළත තබන්න",
+    goodLight:
+      "හොඳ ආලෝකයක් ඇති ස්ථානයක ඡායාරූපය ගන්න",
+
+    loadingModel: "මොඩලය පූරණය වෙමින්...",
+    loadingModelSub:
+      "මේ සඳහා මිනිත්තුවක් පමණ ගත විය හැක",
+
+    tryAgain: "නැවත උත්සාහ කරන්න",
+    uploadImage: "ඡායාරූපයක් උඩුගත කරන්න",
+    captureImage: "ඡායාරූපය ගන්න",
+    analysing: "විශ්ලේෂණය වෙමින්...",
+
+    analysisResults: "විශ්ලේෂණ ප්‍රතිඵල",
+    analysisResultsSub: "Analysis Results",
+
+    uncertainTitle: "අවිනිශ්චිත ස්කෑන් ප්‍රතිඵලයකි",
+    uncertainDescription:
+      "මෙම ප්‍රතිඵලය අවිනිශ්චිතය. රසායනික ප්‍රතිකාර භාවිතයට පෙර, වඩා හොඳ ආලෝකයකින් පත්‍රය ආසන්නයෙන් නැවත ස්කෑන් කරන්න.",
+
+    capturedImage: "ග්‍රහණය කළ රූපය",
+    match: "ගැළපීම",
+
+    confidence: "විශ්වාසය",
+    description: "විස්තරය",
+
+    treatmentSteps: "ප්‍රතිකාර පියවර",
+    chemicalTreatment: "රසායනික ප්‍රතිකාර",
+    organicTreatment: "කාබනික ප්‍රතිකාර",
+    prevention: "වැළැක්වීම",
+
+    uncertainChemical:
+      "අවිනිශ්චිත ස්කෑන් ප්‍රතිඵල සඳහා රසායනික ප්‍රතිකාර නිර්දේශ නොකෙරේ. කරුණාකර නැවත ස්කෑන් කරන්න.",
+
+    viewDetails: "සම්පූර්ණ තොරතුරු බලන්න",
+    viewDetailsSub: "View Full Details",
+
+    outbreakMap: "ව්‍යාප්ති සිතියම බලන්න",
+    outbreakMapSub: "කිලෝමීටර් 5 ඇතුළත වාර්තා බලන්න",
+
+    scanAgain: "නැවත ස්කෑන් කරන්න",
+
+    unknownName: "හඳුනාගත නොහැකි රෝගයක්",
+    unknownSymptoms:
+      "පැහැදිලි රෝග ලක්ෂණ හඳුනාගත නොහැක.",
+    unknownConsult:
+      "කෘෂිකර්ම නිලධාරියෙකුගෙන් උපදෙස් ලබාගන්න.",
+    unknownTip:
+      "හොඳ ආලෝකයක් ඇති ස්ථානයක පත්‍රයක් නැවත ස්කෑන් කරන්න.",
+
+    cameraError:
+      "කැමරාවට ප්‍රවේශ විය නොහැක. ඡායාරූපයක් උඩුගත කරන්න.",
+
+    locationError:
+      "ස්කෑන් කළ ස්ථානය සොයාගත නොහැක. කරුණාකර නැවත ස්කෑන් කරන්න.",
+
+    speechDisease: "හඳුනාගත් රෝගය",
+    speechSymptoms: "රෝග ලක්ෂණ",
+    speechChemical: "රසායනික ප්‍රතිකාර",
+    speechOrganic: "කාබනික ප්‍රතිකාර",
+    speechPrevention: "වැළැක්වීම",
+  },
+
+  en: {
+    changeLanguage: "Change language",
+
+    onlyScanLeaves: "Only scan plant leaves",
+    placeLeaf: "Place the diseased leaf inside the frame",
+    goodLight: "Take the photo in good lighting",
+
+    loadingModel: "Loading model...",
+    loadingModelSub: "This may take a minute",
+
+    tryAgain: "Try Again",
+    uploadImage: "Upload an image",
+    captureImage: "Capture image",
+    analysing: "Analysing...",
+
+    analysisResults: "Analysis Results",
+    analysisResultsSub: "විශ්ලේෂණ ප්‍රතිඵල",
+
+    uncertainTitle: "Uncertain Scan Result",
+    uncertainDescription:
+      "This result is uncertain. Before applying chemical treatments, scan the leaf again from a closer distance under better lighting.",
+
+    capturedImage: "Captured Image",
+    match: "match",
+
+    confidence: "Confidence",
+    description: "Description",
+
+    treatmentSteps: "Treatment Steps",
+    chemicalTreatment: "Chemical Treatment",
+    organicTreatment: "Organic Treatment",
+    prevention: "Prevention",
+
+    uncertainChemical:
+      "Chemical recommendations are withheld for uncertain scans. Please scan again.",
+
+    viewDetails: "View Full Details",
+    viewDetailsSub: "සම්පූර්ණ තොරතුරු බලන්න",
+
+    outbreakMap: "Check Outbreak Map",
+    outbreakMapSub: "View reports within 5 kilometres",
+
+    scanAgain: "Scan Again",
+
+    unknownName: "Disease Not Identified",
+    unknownSymptoms: "No clear symptoms were detected.",
+    unknownConsult: "Consult an agriculture officer.",
+    unknownTip:
+      "Try scanning a plant leaf again in good lighting.",
+
+    cameraError:
+      "Camera access is unavailable. Upload an image instead.",
+
+    locationError:
+      "The scanned location could not be found. Please scan again.",
+
+    speechDisease: "Detected disease",
+    speechSymptoms: "Symptoms",
+    speechChemical: "Chemical treatment",
+    speechOrganic: "Organic treatment",
+    speechPrevention: "Prevention",
+  },
+};
 
 const CROPS = {
-  paddy: { si: 'වී', en: 'Paddy', emoji: '🌾', classes: ['bacterial_leaf_blight','bacterial_leaf_streak','bacterial_panicle_blight','blast','brown_spot','dead_heart','downy_mildew','hispa','normal','tungro'] },
-  tomato: { si: 'තක්කාලි', en: 'Tomato', emoji: '🍅', classes: ['Tomato___Bacterial_spot','Tomato___Early_blight','Tomato___Late_blight','Tomato___Leaf_Mold','Tomato___Septoria_leaf_spot','Tomato___Spider_mites Two-spotted_spider_mite','Tomato___Target_Spot','Tomato___Tomato_Yellow_Leaf_Curl_Virus','Tomato___Tomato_mosaic_virus','Tomato___healthy'] },
-  chili: { si: 'මිරිස්', en: 'Chili', emoji: '🌶️', classes: ['Bacterial Spot','Cercospora Leaf Spot','Curl Virus','Healthy Leaf','Nutrition Deficiency','White spot'] }
+  paddy: {
+    si: "වී",
+    en: "Paddy",
+    Icon: GiWheat,
+
+    classes: [
+      "bacterial_leaf_blight",
+      "bacterial_leaf_streak",
+      "bacterial_panicle_blight",
+      "blast",
+      "brown_spot",
+      "dead_heart",
+      "downy_mildew",
+      "hispa",
+      "normal",
+      "tungro",
+    ],
+  },
+
+  tomato: {
+    si: "තක්කාලි",
+    en: "Tomato",
+    Icon: GiTomato,
+
+    classes: [
+      "Tomato___Bacterial_spot",
+      "Tomato___Early_blight",
+      "Tomato___Late_blight",
+      "Tomato___Leaf_Mold",
+      "Tomato___Septoria_leaf_spot",
+      "Tomato___Spider_mites Two-spotted_spider_mite",
+      "Tomato___Target_Spot",
+      "Tomato___Tomato_Yellow_Leaf_Curl_Virus",
+      "Tomato___Tomato_mosaic_virus",
+      "Tomato___healthy",
+    ],
+  },
+
+  chili: {
+    si: "මිරිස්",
+    en: "Chili",
+    Icon: GiChiliPepper,
+
+    classes: [
+      "Bacterial Spot",
+      "Cercospora Leaf Spot",
+      "Curl Virus",
+      "Healthy Leaf",
+      "Nutrition Deficiency",
+      "White spot",
+    ],
+  },
 };
 
-const processHighResImage = (img, maxDim = 800) => {
-  return new Promise((resolve) => {
-    const tempCanvas = document.createElement('canvas');
-    const tempCtx = tempCanvas.getContext('2d');
-    let w = img.naturalWidth || img.width;
-    let h = img.naturalHeight || img.height;
-    
-    if (w > maxDim || h > maxDim) {
-      if (w > h) {
-        h = Math.round((h * maxDim) / w);
-        w = maxDim;
-      } else {
-        w = Math.round((w * maxDim) / h);
-        h = maxDim;
+const processHighResImage = (
+  image,
+  maxDimension = 800
+) =>
+  new Promise((resolve, reject) => {
+    try {
+      const temporaryCanvas =
+        document.createElement("canvas");
+
+      const temporaryContext =
+        temporaryCanvas.getContext("2d");
+
+      if (!temporaryContext) {
+        reject(
+          new Error(
+            "Could not create image-processing canvas."
+          )
+        );
+
+        return;
       }
-    }
-    
-    tempCanvas.width = w;
-    tempCanvas.height = h;
-    tempCtx.drawImage(img, 0, 0, w, h);
-    resolve(tempCanvas.toDataURL('image/jpeg', 0.85));
-  });
-};
 
-const processHighResFromVideo = (video, maxDim = 800) => {
-  const tempCanvas = document.createElement('canvas');
-  const tempCtx = tempCanvas.getContext('2d');
-  let w = video.videoWidth || 640;
-  let h = video.videoHeight || 480;
-  
-  if (w > maxDim || h > maxDim) {
-    if (w > h) {
-      h = Math.round((h * maxDim) / w);
-      w = maxDim;
+      let width =
+        image.naturalWidth || image.width;
+
+      let height =
+        image.naturalHeight || image.height;
+
+      if (
+        width > maxDimension ||
+        height > maxDimension
+      ) {
+        if (width > height) {
+          height = Math.round(
+            (height * maxDimension) / width
+          );
+
+          width = maxDimension;
+        } else {
+          width = Math.round(
+            (width * maxDimension) / height
+          );
+
+          height = maxDimension;
+        }
+      }
+
+      temporaryCanvas.width = width;
+      temporaryCanvas.height = height;
+
+      temporaryContext.drawImage(
+        image,
+        0,
+        0,
+        width,
+        height
+      );
+
+      resolve(
+        temporaryCanvas.toDataURL(
+          "image/jpeg",
+          0.85
+        )
+      );
+    } catch (error) {
+      reject(error);
+    }
+  });
+
+const processHighResFromVideo = (
+  video,
+  maxDimension = 800
+) => {
+  const temporaryCanvas =
+    document.createElement("canvas");
+
+  const temporaryContext =
+    temporaryCanvas.getContext("2d");
+
+  if (!temporaryContext) {
+    throw new Error(
+      "Could not create video-processing canvas."
+    );
+  }
+
+  let width = video.videoWidth || 640;
+  let height = video.videoHeight || 480;
+
+  if (
+    width > maxDimension ||
+    height > maxDimension
+  ) {
+    if (width > height) {
+      height = Math.round(
+        (height * maxDimension) / width
+      );
+
+      width = maxDimension;
     } else {
-      w = Math.round((w * maxDim) / h);
-      h = maxDim;
+      width = Math.round(
+        (width * maxDimension) / height
+      );
+
+      height = maxDimension;
     }
   }
-  
-  tempCanvas.width = w;
-  tempCanvas.height = h;
-  tempCtx.drawImage(video, 0, 0, w, h);
-  return tempCanvas.toDataURL('image/jpeg', 0.85);
+
+  temporaryCanvas.width = width;
+  temporaryCanvas.height = height;
+
+  temporaryContext.drawImage(
+    video,
+    0,
+    0,
+    width,
+    height
+  );
+
+  return temporaryCanvas.toDataURL(
+    "image/jpeg",
+    0.85
+  );
 };
 
-function LangToggle({ lang, toggleLang }) {
+function LanguageToggle({
+  language,
+  onToggle,
+  label,
+}) {
   return (
-    <button onClick={toggleLang} style={{
-      width: '72px', height: '32px', borderRadius: '16px',
-      background: lang === 'si' ? '#4CAF50' : '#888',
-      position: 'relative', border: 'none', cursor: 'pointer',
-      transition: 'background 0.3s', flexShrink: 0,
-    }}>
-      <div style={{
-        width: '26px', height: '26px', borderRadius: '50%', background: '#fff',
-        position: 'absolute', top: '3px',
-        left: lang === 'si' ? '3px' : '43px',
-        transition: 'left 0.3s',
-        boxShadow: '0 1px 4px rgba(0,0,0,0.2)'
-      }} />
-      <span style={{
-        position: 'absolute', fontSize: '10px', fontWeight: '700', color: '#fff',
-        left: lang === 'si' ? '33px' : '8px',
-        top: '7px', transition: 'left 0.3s', userSelect: 'none'
-      }}>
-        {lang === 'si' ? 'සිං' : 'EN'}
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-label={label}
+      title={label}
+      className={`relative h-8 w-[72px] shrink-0 rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-white ${
+        language === "si"
+          ? "bg-[#4CAF50]"
+          : "bg-[#888888]"
+      }`}
+    >
+      <span
+        className={`absolute top-[3px] h-[26px] w-[26px] rounded-full bg-white shadow-[0_1px_4px_rgba(0,0,0,0.2)] transition-all duration-300 ${
+          language === "si"
+            ? "left-[3px]"
+            : "left-[43px]"
+        }`}
+      />
+
+      <span
+        className={`absolute top-[7px] select-none text-[10px] font-bold text-white transition-all duration-300 ${
+          language === "si"
+            ? "left-[33px]"
+            : "left-[8px]"
+        }`}
+      >
+        {language === "si" ? "සිං" : "EN"}
       </span>
     </button>
   );
 }
 
 function ScanContent() {
-  const { lang, toggleLang, t } = useLang();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const cropFromUrl = searchParams.get('crop');
-  const { model, loading: modelLoading, error: modelError, loadModel, predict, clearModel } = useModel();
 
-  const initialCrop = cropFromUrl && CROPS[cropFromUrl] ? cropFromUrl : 'tomato';
-  const [step, setStep] = useState('camera');
-  const [selectedCrop, setSelectedCrop] = useState(initialCrop);
-  const [capturedImage, setCapturedImage] = useState(null);
-  const [predicting, setPredicting] = useState(false);
-  const [result, setResult] = useState(null);
-  const [treatment, setTreatment] = useState(null);
+  const cropFromUrl =
+    searchParams.get("crop");
+
+  const {
+    model,
+    loading: modelLoading,
+    error: modelError,
+    loadModel,
+    predict,
+  } = useModel();
+
+  const initialCrop =
+    cropFromUrl && CROPS[cropFromUrl]
+      ? cropFromUrl
+      : "tomato";
+
+  const [language, setLanguage] =
+    useState("si");
+
+  const [step, setStep] =
+    useState("camera");
+
+  const [selectedCrop] =
+    useState(initialCrop);
+
+  const [
+    capturedImage,
+    setCapturedImage,
+  ] = useState(null);
+
+  const [predicting, setPredicting] =
+    useState(false);
+
+  const [result, setResult] =
+    useState(null);
+
+  const [treatment, setTreatment] =
+    useState(null);
+
+  const [
+    cameraError,
+    setCameraError,
+  ] = useState("");
+
+  const [
+    navigationError,
+    setNavigationError,
+  ] = useState("");
+
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
   const coordsRef = useRef(null);
 
-  const getCoords = () => new Promise((resolve) => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => resolve([pos.coords.longitude, pos.coords.latitude]),
-        () => resolve([80.601, 7.901]),
-        { timeout: 8000, maximumAge: 30000 }
-      );
-    } else {
-      resolve([80.601, 7.901]);
-    }
-  });
+  const text = scanText[language];
 
-  const logOutbreakScan = async (diseaseName, confidence, coords) => {
-    if (diseaseName === 'unknown' || !coords) return;
+  const apiUrl =
+    process.env.NEXT_PUBLIC_API_URL ||
+    "http://localhost:5000";
+
+  const selectedCropData =
+    CROPS[selectedCrop];
+
+  const CropIcon =
+    selectedCropData?.Icon || Wheat;
+
+  useEffect(() => {
     try {
-      const token = localStorage.getItem('govi_nena_token');
-      await fetch('http://localhost:5000/api/outbreaks', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      const savedLanguage =
+        localStorage.getItem(
+          "govi_nena_language"
+        );
+
+      if (
+        savedLanguage === "si" ||
+        savedLanguage === "en"
+      ) {
+        setLanguage(savedLanguage);
+      }
+    } catch (error) {
+      console.error(
+        "Could not load language preference:",
+        error
+      );
+    }
+  }, []);
+
+  const toggleLanguage = () => {
+    const nextLanguage =
+      language === "si" ? "en" : "si";
+
+    setLanguage(nextLanguage);
+
+    try {
+      localStorage.setItem(
+        "govi_nena_language",
+        nextLanguage
+      );
+    } catch (error) {
+      console.error(
+        "Could not save language preference:",
+        error
+      );
+    }
+  };
+
+  const getCoordinates = () =>
+    new Promise((resolve) => {
+      if (!navigator.geolocation) {
+        resolve([80.601, 7.901]);
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          resolve([
+            position.coords.longitude,
+            position.coords.latitude,
+          ]);
         },
-        body: JSON.stringify({
-          disease: diseaseName,
-          crop: selectedCrop,
-          confidence,
-          coordinates: coords
-        })
-      });
-    } catch (err) {
-      console.error('Outbreak log fail:', err);
+
+        (error) => {
+          console.warn(
+            "Location access failed. Using fallback coordinates:",
+            error.message
+          );
+
+          resolve([80.601, 7.901]);
+        },
+
+        {
+          enableHighAccuracy: true,
+          timeout: 8000,
+          maximumAge: 30000,
+        }
+      );
+    });
+
+  const logOutbreakScan = async (
+    diseaseName,
+    confidence,
+    coordinates
+  ) => {
+    if (
+      diseaseName === "unknown" ||
+      !Array.isArray(coordinates) ||
+      coordinates.length !== 2
+    ) {
+      return;
+    }
+
+    try {
+      const token =
+        localStorage.getItem(
+          "govi_nena_token"
+        );
+
+      const response = await fetch(
+        `${apiUrl}/api/outbreaks`,
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+
+            ...(token
+              ? {
+                  Authorization:
+                    `Bearer ${token}`,
+                }
+              : {}),
+          },
+
+          body: JSON.stringify({
+            disease: diseaseName,
+            crop: selectedCrop,
+            confidence,
+            coordinates,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const data = await response
+          .json()
+          .catch(() => ({}));
+
+        console.error(
+          "Outbreak scan was not recorded:",
+          data.message ||
+            response.statusText
+        );
+      }
+    } catch (error) {
+      console.error(
+        "Failed to record outbreak scan:",
+        error
+      );
     }
   };
 
   const startCamera = async () => {
+    setCameraError("");
+
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }
-      });
+      const stream =
+        await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: {
+              ideal: "environment",
+            },
+
+            width: {
+              ideal: 1280,
+            },
+
+            height: {
+              ideal: 720,
+            },
+          },
+        });
+
       streamRef.current = stream;
-      if (videoRef.current) videoRef.current.srcObject = stream;
+
+      if (videoRef.current) {
+        videoRef.current.srcObject =
+          stream;
+      }
     } catch {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const stream =
+          await navigator.mediaDevices.getUserMedia({
+            video: true,
+          });
+
         streamRef.current = stream;
-        if (videoRef.current) videoRef.current.srcObject = stream;
-      } catch { console.error('Camera access denied'); }
+
+        if (videoRef.current) {
+          videoRef.current.srcObject =
+            stream;
+        }
+      } catch (error) {
+        console.error(
+          "Camera access denied:",
+          error
+        );
+
+        setCameraError(
+          text.cameraError
+        );
+      }
     }
   };
 
   const stopCamera = () => {
-    if (streamRef.current) streamRef.current.getTracks().forEach(tr => tr.stop());
+    if (!streamRef.current) {
+      return;
+    }
+
+    streamRef.current
+      .getTracks()
+      .forEach((track) => {
+        track.stop();
+      });
+
+    streamRef.current = null;
+
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
   };
 
-  const handleImageUpload = async (event) => {
-    const file = event.target.files?.[0];
-    if (!file || !model) return;
+  const createUnknownTreatment = () => ({
+    name: text.unknownName,
+    symptoms: text.unknownSymptoms,
+    chemical: text.unknownConsult,
+    organic: text.unknownConsult,
+    prevention: text.unknownTip,
+  });
 
-    setPredicting(true);
-    stopCamera();
+  const completePrediction = async (
+    prediction,
+    coordinates,
+    imageData
+  ) => {
+    if (!prediction) {
+      setPredicting(false);
+      return;
+    }
 
-    // GPS fetch ෙකේ image processing ෙකේ parallel ෙකේ start — result show වෙනකොට ready
-    const coordsPromise = getCoords();
+    const {
+      disease: diseaseName,
+      confidence,
+      isUncertain,
+    } = prediction;
 
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const img = new Image();
-      img.onload = async () => {
-        const highResDataUrl = await processHighResImage(img, 800);
-        setCapturedImage(highResDataUrl);
+    coordsRef.current = coordinates;
 
-        const canvas = canvasRef.current;
-        const ctx = canvas.getContext('2d');
-        canvas.width = 224;
-        canvas.height = 224;
-        ctx.drawImage(img, 0, 0, 224, 224);
+    try {
+      localStorage.setItem(
+        "govi_nena_last_scan_coords",
+        JSON.stringify(coordinates)
+      );
 
-        const [prediction, coords] = await Promise.all([
-          predict(canvas, selectedCrop, CROPS[selectedCrop].classes),
-          coordsPromise
-        ]);
+      localStorage.setItem(
+        "govi_nena_last_scan_crop",
+        selectedCrop
+      );
+    } catch (error) {
+      console.error(
+        "Could not save scan location or crop:",
+        error
+      );
+    }
 
-        if (!prediction) { setPredicting(false); return; }
-        const { disease: diseaseName, confidence, isUncertain } = prediction;
+    logOutbreakScan(
+      diseaseName,
+      confidence,
+      coordinates
+    );
 
-        coordsRef.current = coords;
-        localStorage.setItem('govi_nena_last_scan_coords', JSON.stringify(coords));
-        logOutbreakScan(diseaseName, confidence, coords);
+    let resultMetadata;
 
-        let resultMeta;
-        if (diseaseName === 'unknown') {
-          resultMeta = {
-            disease: 'unknown',
-            confidence,
-            isUncertain: true,
-            siName: 'හඳුනාගත නොහැකි රෝගයක්',
-            enName: 'Disease Not Identified'
-          };
-          setResult(resultMeta);
-          setTreatment({
-            name: t.results_unknown,
-            symptoms: t.results_unknown_symptoms,
-            chemical: t.results_unknown_consult,
-            organic: t.results_unknown_consult,
-            prevention: t.results_unknown_tip
-          });
-        } else {
-          const treatmentData = await getTreatmentOffline(selectedCrop, diseaseName, lang);
-          const siData = await getTreatmentOffline(selectedCrop, diseaseName, 'si');
-          const enData = await getTreatmentOffline(selectedCrop, diseaseName, 'en');
-          resultMeta = {
-            disease: diseaseName,
-            confidence,
-            isUncertain,
-            siName: siData.name,
-            enName: enData.name
-          };
-          setResult(resultMeta);
-          setTreatment(treatmentData);
-        }
-        localStorage.setItem('govi_nena_last_scan_image', highResDataUrl);
-        localStorage.setItem('govi_nena_last_result', JSON.stringify(resultMeta));
-        sessionStorage.setItem('govi_nena_scan_active_result', 'true');
-        setPredicting(false);
-        setStep('result');
-      };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-    event.target.value = '';
-  };
-
-  const captureAndPredict = async () => {
-    if (!model || !videoRef.current) return;
-    setPredicting(true);
-    const video = videoRef.current;
-
-    const highResDataUrl = processHighResFromVideo(video, 800);
-    setCapturedImage(highResDataUrl);
-    stopCamera();
-
-    // GPS fetch ෙකේ prediction ෙකේ parallel ෙකේ start — result show වෙනකොට ready
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    canvas.width = 224;
-    canvas.height = 224;
-    ctx.drawImage(video, 0, 0, 224, 224);
-
-    const [prediction, coords] = await Promise.all([
-      predict(canvas, selectedCrop, CROPS[selectedCrop].classes),
-      getCoords()
-    ]);
-
-    if (!prediction) { setPredicting(false); return; }
-    const { disease: diseaseName, confidence, isUncertain } = prediction;
-
-    coordsRef.current = coords;
-    localStorage.setItem('govi_nena_last_scan_coords', JSON.stringify(coords));
-    logOutbreakScan(diseaseName, confidence, coords);
-
-    let resultMeta;
-    if (diseaseName === 'unknown') {
-      resultMeta = {
-        disease: 'unknown',
+    if (diseaseName === "unknown") {
+      resultMetadata = {
+        disease: "unknown",
         confidence,
         isUncertain: true,
-        siName: 'හඳුනාගත නොහැකි රෝගයක්',
-        enName: 'Disease Not Identified'
+        siName:
+          scanText.si.unknownName,
+        enName:
+          scanText.en.unknownName,
       };
-      setResult(resultMeta);
-      setTreatment({
-        name: t.results_unknown,
-        symptoms: t.results_unknown_symptoms,
-        chemical: t.results_unknown_consult,
-        organic: t.results_unknown_consult,
-        prevention: t.results_unknown_tip
-      });
+
+      setTreatment(
+        createUnknownTreatment()
+      );
     } else {
-      const treatmentData = await getTreatmentOffline(selectedCrop, diseaseName, lang);
-      const siData = await getTreatmentOffline(selectedCrop, diseaseName, 'si');
-      const enData = await getTreatmentOffline(selectedCrop, diseaseName, 'en');
-      resultMeta = {
+      const [
+        currentLanguageTreatment,
+        sinhalaTreatment,
+        englishTreatment,
+      ] = await Promise.all([
+        getTreatmentOffline(
+          selectedCrop,
+          diseaseName,
+          language
+        ),
+
+        getTreatmentOffline(
+          selectedCrop,
+          diseaseName,
+          "si"
+        ),
+
+        getTreatmentOffline(
+          selectedCrop,
+          diseaseName,
+          "en"
+        ),
+      ]);
+
+      resultMetadata = {
         disease: diseaseName,
         confidence,
         isUncertain,
-        siName: siData.name,
-        enName: enData.name
+        siName:
+          sinhalaTreatment.name,
+        enName:
+          englishTreatment.name,
       };
-      setResult(resultMeta);
-      setTreatment(treatmentData);
+
+      setTreatment(
+        currentLanguageTreatment
+      );
     }
-    localStorage.setItem('govi_nena_last_scan_image', highResDataUrl);
-    localStorage.setItem('govi_nena_last_result', JSON.stringify(resultMeta));
-    sessionStorage.setItem('govi_nena_scan_active_result', 'true');
+
+    setResult(resultMetadata);
+
+    try {
+      localStorage.setItem(
+        "govi_nena_last_scan_image",
+        imageData
+      );
+
+      localStorage.setItem(
+        "govi_nena_last_result",
+        JSON.stringify(resultMetadata)
+      );
+
+      localStorage.setItem(
+        "govi_nena_last_scan_crop",
+        selectedCrop
+      );
+
+      sessionStorage.setItem(
+        "govi_nena_scan_active_result",
+        "true"
+      );
+    } catch (error) {
+      console.error(
+        "Could not save the scan result:",
+        error
+      );
+    }
+
     setPredicting(false);
-    setStep('result');
+    setStep("result");
   };
 
-  const speakResult = () => {
-    if (!treatment) return;
-    
-    const chemText = result?.isUncertain
-      ? (lang === 'si' ? 'අවිනිශ්චිත ස්කෑන් පරීක්ෂණ සඳහා රසායනික ප්‍රතිකාර නිර්දේශ නොකෙරේ.' : 'Chemical recommendations are withheld for uncertain scans.')
-      : treatment.chemical;
+  const handleImageUpload = async (
+    event
+  ) => {
+    const file =
+      event.target.files?.[0];
 
-    // Construct full descriptive speech text
-    const text = lang === 'si'
-      ? `හඳුනාගත් රෝගය: ${treatment.name}. රෝග ලක්ෂණ: ${treatment.symptoms}. රසායනික ප්‍රතිකාර: ${chemText}. කාබනික ප්‍රතිකාර: ${treatment.organic}. වැළැක්වීම: ${treatment.prevention}.`
-      : `Detected disease: ${treatment.name}. Symptoms: ${treatment.symptoms}. Chemical treatment: ${chemText}. Organic treatment: ${treatment.organic}. Prevention: ${treatment.prevention}.`;
+    if (!file || !model) {
+      return;
+    }
 
-    const speakNativeFallback = () => {
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = lang === 'si' ? 'si-LK' : 'en-US';
-      window.speechSynthesis.speak(utterance);
+    setPredicting(true);
+    setNavigationError("");
+    stopCamera();
+
+    const coordinatesPromise =
+      getCoordinates();
+
+    const reader = new FileReader();
+
+    reader.onload = (
+      loadEvent
+    ) => {
+      const image = new Image();
+
+      image.onload = async () => {
+        try {
+          const imageData =
+            await processHighResImage(
+              image,
+              800
+            );
+
+          setCapturedImage(
+            imageData
+          );
+
+          const canvas =
+            canvasRef.current;
+
+          const context =
+            canvas?.getContext("2d");
+
+          if (!canvas || !context) {
+            throw new Error(
+              "Prediction canvas is unavailable."
+            );
+          }
+
+          canvas.width = 224;
+          canvas.height = 224;
+
+          context.drawImage(
+            image,
+            0,
+            0,
+            224,
+            224
+          );
+
+          const [
+            prediction,
+            coordinates,
+          ] = await Promise.all([
+            predict(
+              canvas,
+              selectedCrop,
+              selectedCropData.classes
+            ),
+
+            coordinatesPromise,
+          ]);
+
+          await completePrediction(
+            prediction,
+            coordinates,
+            imageData
+          );
+        } catch (error) {
+          console.error(
+            "Image prediction failed:",
+            error
+          );
+
+          setPredicting(false);
+        }
+      };
+
+      image.onerror = () => {
+        console.error(
+          "The selected image could not be loaded."
+        );
+
+        setPredicting(false);
+      };
+
+      image.src =
+        loadEvent.target.result;
     };
 
-    if (typeof window !== 'undefined' && navigator.onLine) {
-      // Use local Next.js server-side TTS API
-      const url = `/api/tts?text=${encodeURIComponent(text)}&lang=${lang}`;
-      const audio = new Audio(url);
-      
-      // Handle source loading errors
-      audio.addEventListener('error', () => {
-        console.warn("Server-side TTS failed to load, falling back to native SpeechSynthesis");
-        speakNativeFallback();
-      });
+    reader.onerror = () => {
+      console.error(
+        "The selected file could not be read."
+      );
 
-      // Handle autoplay browser blocks
-      audio.play().catch(err => {
-        console.warn("Server-side TTS play failed, falling back to native SpeechSynthesis", err);
-        speakNativeFallback();
-      });
+      setPredicting(false);
+    };
+
+    reader.readAsDataURL(file);
+    event.target.value = "";
+  };
+
+  const captureAndPredict =
+    async () => {
+      if (
+        !model ||
+        !videoRef.current
+      ) {
+        return;
+      }
+
+      setPredicting(true);
+      setNavigationError("");
+
+      try {
+        const video =
+          videoRef.current;
+
+        const imageData =
+          processHighResFromVideo(
+            video,
+            800
+          );
+
+        setCapturedImage(imageData);
+
+        const canvas =
+          canvasRef.current;
+
+        const context =
+          canvas?.getContext("2d");
+
+        if (!canvas || !context) {
+          throw new Error(
+            "Prediction canvas is unavailable."
+          );
+        }
+
+        canvas.width = 224;
+        canvas.height = 224;
+
+        context.drawImage(
+          video,
+          0,
+          0,
+          224,
+          224
+        );
+
+        stopCamera();
+
+        const [
+          prediction,
+          coordinates,
+        ] = await Promise.all([
+          predict(
+            canvas,
+            selectedCrop,
+            selectedCropData.classes
+          ),
+
+          getCoordinates(),
+        ]);
+
+        await completePrediction(
+          prediction,
+          coordinates,
+          imageData
+        );
+      } catch (error) {
+        console.error(
+          "Camera prediction failed:",
+          error
+        );
+
+        setPredicting(false);
+      }
+    };
+
+  const speakResult = () => {
+    if (!treatment) {
+      return;
+    }
+
+    const chemicalText =
+      result?.isUncertain
+        ? text.uncertainChemical
+        : treatment.chemical;
+
+    const speechText =
+      `${text.speechDisease}: ${treatment.name}. ` +
+      `${text.speechSymptoms}: ${treatment.symptoms}. ` +
+      `${text.speechChemical}: ${chemicalText}. ` +
+      `${text.speechOrganic}: ${treatment.organic}. ` +
+      `${text.speechPrevention}: ${treatment.prevention}.`;
+
+    const speakWithBrowser = () => {
+      if (
+        typeof window ===
+          "undefined" ||
+        !window.speechSynthesis
+      ) {
+        return;
+      }
+
+      window.speechSynthesis.cancel();
+
+      const utterance =
+        new SpeechSynthesisUtterance(
+          speechText
+        );
+
+      utterance.lang =
+        language === "si"
+          ? "si-LK"
+          : "en-US";
+
+      window.speechSynthesis.speak(
+        utterance
+      );
+    };
+
+    if (
+      typeof window !==
+        "undefined" &&
+      navigator.onLine
+    ) {
+      const ttsUrl =
+        `/api/tts?text=${encodeURIComponent(
+          speechText
+        )}&lang=${language}`;
+
+      const audio =
+        new Audio(ttsUrl);
+
+      audio.addEventListener(
+        "error",
+        speakWithBrowser
+      );
+
+      audio
+        .play()
+        .catch(speakWithBrowser);
     } else {
-      // Device offline: Fallback to native client-side speech engine
-      speakNativeFallback();
+      speakWithBrowser();
     }
   };
 
   const handleReset = () => {
-    sessionStorage.removeItem('govi_nena_scan_active_result');
-    setStep('camera');
+    try {
+      sessionStorage.removeItem(
+        "govi_nena_scan_active_result"
+      );
+    } catch (error) {
+      console.error(
+        "Could not clear active scan state:",
+        error
+      );
+    }
+
+    setStep("camera");
     setResult(null);
     setTreatment(null);
     setCapturedImage(null);
-    loadModel(selectedCrop).then(loaded => { if (loaded) startCamera(); });
+    setCameraError("");
+    setNavigationError("");
+    coordsRef.current = null;
+
+    loadModel(selectedCrop).then(
+      (loaded) => {
+        if (loaded) {
+          startCamera();
+        }
+      }
+    );
+  };
+
+  const handleClose = () => {
+    try {
+      sessionStorage.removeItem(
+        "govi_nena_scan_active_result"
+      );
+    } catch (error) {
+      console.error(
+        "Could not clear active scan state:",
+        error
+      );
+    }
+
+    stopCamera();
+    router.push("/home");
+  };
+
+  const restoreStoredCoordinates = () => {
+    if (
+      Array.isArray(
+        coordsRef.current
+      ) &&
+      coordsRef.current.length === 2
+    ) {
+      return coordsRef.current;
+    }
+
+    try {
+      const storedCoordinates =
+        localStorage.getItem(
+          "govi_nena_last_scan_coords"
+        );
+
+      if (!storedCoordinates) {
+        return null;
+      }
+
+      const parsedCoordinates =
+        JSON.parse(storedCoordinates);
+
+      if (
+        Array.isArray(
+          parsedCoordinates
+        ) &&
+        parsedCoordinates.length === 2
+      ) {
+        coordsRef.current =
+          parsedCoordinates;
+
+        return parsedCoordinates;
+      }
+    } catch (error) {
+      console.error(
+        "Could not restore scan coordinates:",
+        error
+      );
+    }
+
+    return null;
   };
 
   const handleViewDetails = () => {
-    if (!result || !treatment) return;
-    if (capturedImage) localStorage.setItem('govi_nena_last_scan_image', capturedImage);
-    const coords = coordsRef.current;
-    const params = new URLSearchParams({
-      disease: result.disease,
-      label: treatment.name,
-      confidence: String(result.confidence),
-      crop: selectedCrop || '',
-      isUncertain: String(!!result.isUncertain),
-      ...(coords ? { lat: String(coords[1]), lng: String(coords[0]) } : {})
-    });
-    router.push(`/scan/result-detail?${params.toString()}`);
-  };
-
-  // ── Language change වුනාම treatment re-fetch ──────────
-  useEffect(() => {
-    if (!result || !selectedCrop) return;
-
-    if (result.disease === 'unknown') {
-      setTreatment({
-        name: t.results_unknown,
-        symptoms: t.results_unknown_symptoms,
-        chemical: t.results_unknown_consult,
-        organic: t.results_unknown_consult,
-        prevention: t.results_unknown_tip
-      });
-    } else {
-      getTreatmentOffline(selectedCrop, result.disease, lang).then(setTreatment);
-    }
-  }, [lang]);
-
-  useEffect(() => {
-    if (!cropFromUrl || !CROPS[cropFromUrl]) {
-      router.push('/home');
+    if (!result || !treatment) {
       return;
     }
 
-    const restoreActiveResult = async () => {
-      const activeResultFlag = sessionStorage.getItem('govi_nena_scan_active_result');
-      if (activeResultFlag === 'true') {
-        const storedImage = localStorage.getItem('govi_nena_last_scan_image');
-        const storedResult = localStorage.getItem('govi_nena_last_result');
-        if (storedImage && storedResult) {
-          try {
-            const parsedResult = JSON.parse(storedResult);
-            setCapturedImage(storedImage);
-            setResult(parsedResult);
-            
-            if (parsedResult.disease === 'unknown') {
-              setTreatment({
-                name: t.results_unknown,
-                symptoms: t.results_unknown_symptoms,
-                chemical: t.results_unknown_consult,
-                organic: t.results_unknown_consult,
-                prevention: t.results_unknown_tip
-              });
-            } else {
-              const treatmentData = await getTreatmentOffline(cropFromUrl, parsedResult.disease, lang);
-              setTreatment(treatmentData);
+    if (capturedImage) {
+      try {
+        localStorage.setItem(
+          "govi_nena_last_scan_image",
+          capturedImage
+        );
+      } catch (error) {
+        console.error(
+          "Could not save captured image:",
+          error
+        );
+      }
+    }
+
+    const coordinates =
+      restoreStoredCoordinates();
+
+    const params =
+      new URLSearchParams({
+        disease: result.disease,
+        label: treatment.name,
+        confidence: String(
+          result.confidence
+        ),
+        crop: selectedCrop,
+        isUncertain: String(
+          Boolean(
+            result.isUncertain
+          )
+        ),
+
+        ...(coordinates
+          ? {
+              lat: String(
+                coordinates[1]
+              ),
+
+              lng: String(
+                coordinates[0]
+              ),
             }
-            
-            setStep('result');
-            return true;
-          } catch (err) {
-            console.error('Error restoring active scan result', err);
-          }
+          : {}),
+      });
+
+    router.push(
+      `/scan/result-detail?${params.toString()}`
+    );
+  };
+
+  const handleViewHeatmap = () => {
+    setNavigationError("");
+
+    if (
+      !result ||
+      !result.disease
+    ) {
+      return;
+    }
+
+    const coordinates =
+      restoreStoredCoordinates();
+
+    if (
+      !Array.isArray(coordinates) ||
+      coordinates.length !== 2
+    ) {
+      setNavigationError(
+        text.locationError
+      );
+
+      return;
+    }
+
+    const [
+      longitude,
+      latitude,
+    ] = coordinates;
+
+    if (
+      !Number.isFinite(
+        Number(longitude)
+      ) ||
+      !Number.isFinite(
+        Number(latitude)
+      )
+    ) {
+      setNavigationError(
+        text.locationError
+      );
+
+      return;
+    }
+
+    try {
+      localStorage.setItem(
+        "govi_nena_last_scan_crop",
+        selectedCrop
+      );
+
+      localStorage.setItem(
+        "govi_nena_last_result",
+        JSON.stringify(result)
+      );
+
+      localStorage.setItem(
+        "govi_nena_last_scan_coords",
+        JSON.stringify(coordinates)
+      );
+    } catch (error) {
+      console.error(
+        "Could not save heatmap parameters:",
+        error
+      );
+    }
+
+    const params =
+      new URLSearchParams({
+        disease: result.disease,
+        crop: selectedCrop,
+        lat: String(latitude),
+        lng: String(longitude),
+        radius: "5",
+      });
+
+    router.push(
+      `/heatmap?${params.toString()}`
+    );
+  };
+
+  useEffect(() => {
+    if (
+      !result ||
+      !selectedCrop
+    ) {
+      return;
+    }
+
+    if (
+      result.disease === "unknown"
+    ) {
+      setTreatment(
+        createUnknownTreatment()
+      );
+
+      return;
+    }
+
+    getTreatmentOffline(
+      selectedCrop,
+      result.disease,
+      language
+    )
+      .then(setTreatment)
+      .catch((error) => {
+        console.error(
+          "Could not change treatment language:",
+          error
+        );
+      });
+  }, [
+    language,
+    result,
+    selectedCrop,
+  ]);
+
+  useEffect(() => {
+    if (
+      !cropFromUrl ||
+      !CROPS[cropFromUrl]
+    ) {
+      router.push("/home");
+      return;
+    }
+
+    let componentActive = true;
+
+    const restoreActiveResult =
+      async () => {
+        const activeResultFlag =
+          sessionStorage.getItem(
+            "govi_nena_scan_active_result"
+          );
+
+        if (
+          activeResultFlag !==
+          "true"
+        ) {
+          return false;
         }
-      }
-      return false;
-    };
 
-    restoreActiveResult().then((restored) => {
-      if (!restored) {
-        loadModel(cropFromUrl).then(loaded => { 
-          if (loaded) {
-            startCamera();
+        const storedImage =
+          localStorage.getItem(
+            "govi_nena_last_scan_image"
+          );
+
+        const storedResult =
+          localStorage.getItem(
+            "govi_nena_last_result"
+          );
+
+        const storedCoordinates =
+          localStorage.getItem(
+            "govi_nena_last_scan_coords"
+          );
+
+        if (
+          !storedImage ||
+          !storedResult
+        ) {
+          return false;
+        }
+
+        try {
+          const parsedResult =
+            JSON.parse(storedResult);
+
+          if (storedCoordinates) {
+            const parsedCoordinates =
+              JSON.parse(
+                storedCoordinates
+              );
+
+            if (
+              Array.isArray(
+                parsedCoordinates
+              ) &&
+              parsedCoordinates.length ===
+                2
+            ) {
+              coordsRef.current =
+                parsedCoordinates;
+            }
           }
-        });
+
+          if (!componentActive) {
+            return true;
+          }
+
+          setCapturedImage(
+            storedImage
+          );
+
+          setResult(parsedResult);
+
+          if (
+            parsedResult.disease ===
+            "unknown"
+          ) {
+            setTreatment(
+              createUnknownTreatment()
+            );
+          } else {
+            const treatmentData =
+              await getTreatmentOffline(
+                cropFromUrl,
+                parsedResult.disease,
+                language
+              );
+
+            if (componentActive) {
+              setTreatment(
+                treatmentData
+              );
+            }
+          }
+
+          if (componentActive) {
+            setStep("result");
+          }
+
+          return true;
+        } catch (error) {
+          console.error(
+            "Could not restore scan result:",
+            error
+          );
+
+          return false;
+        }
+      };
+
+    restoreActiveResult().then(
+      (restored) => {
+        if (
+          restored ||
+          !componentActive
+        ) {
+          return;
+        }
+
+        loadModel(cropFromUrl).then(
+          (loaded) => {
+            if (
+              loaded &&
+              componentActive
+            ) {
+              startCamera();
+            }
+          }
+        );
       }
-    });
+    );
 
-    return () => stopCamera();
-  }, [cropFromUrl, router, loadModel]);
+    return () => {
+      componentActive = false;
+      stopCamera();
+    };
+  }, [
+    cropFromUrl,
+    router,
+    loadModel,
+  ]);
 
-  // ── STEP 2: Camera ──
-  if (step === 'camera') {
+  if (step === "camera") {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#000' }}>
-        <canvas ref={canvasRef} style={{ display: 'none' }} />
+      <main className="flex min-h-screen flex-col bg-black font-sans">
+        <canvas
+          ref={canvasRef}
+          className="hidden"
+        />
 
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'clamp(32px, 5vw, 64px) clamp(16px, 3vw, 40px) 16px' }}>
-          <button onClick={() => { 
-            sessionStorage.removeItem('govi_nena_scan_active_result');
-            stopCamera(); 
-            router.push('/home'); 
-          }} style={{ color: '#fff', fontSize: 'clamp(18px, 2vw, 26px)', background: 'none', border: 'none', cursor: 'pointer' }}>✕</button>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-            <div style={{ background: 'rgba(46,125,50,0.85)', borderRadius: '20px', padding: '8px 20px', color: '#fff', fontSize: 'clamp(13px, 1.2vw, 18px)', fontWeight: '600' }}>
-              {selectedCrop && `${CROPS[selectedCrop].emoji} ${lang === 'si' ? CROPS[selectedCrop].si : CROPS[selectedCrop].en}`}
+        {/* Camera header */}
+        <header className="flex items-start justify-between gap-3 px-4 pb-4 pt-8 sm:px-6 sm:pt-10">
+          <button
+            type="button"
+            onClick={handleClose}
+            aria-label="Close camera"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/15 text-white transition-colors hover:bg-white/25 focus:outline-none focus:ring-2 focus:ring-white"
+          >
+            <X
+              size={22}
+              strokeWidth={2.2}
+            />
+          </button>
+
+          <div className="flex min-w-0 flex-1 flex-col items-center gap-2">
+            <div className="flex items-center gap-2 rounded-full bg-[#1B5E20]/90 px-4 py-2 text-sm font-semibold text-white">
+              <CropIcon
+                size={19}
+                strokeWidth={2.2}
+              />
+
+              <span>
+                {
+                  selectedCropData[
+                    language
+                  ]
+                }
+              </span>
             </div>
-            <div style={{ background: 'rgba(253,216,53,0.2)', borderRadius: '12px', padding: '4px 14px' }}>
-              <p style={{ color: '#FDD835', fontSize: 'clamp(11px, 1vw, 14px)', margin: 0 }}>
-                ⚠️ {lang === 'si' ? `${CROPS[selectedCrop]?.si} ${t.scan_only_scan}` : `${t.scan_only_scan} ${CROPS[selectedCrop]?.en}`}
-              </p>
+
+            <div className="flex max-w-full items-center gap-1.5 rounded-xl bg-yellow-400/15 px-3 py-1.5 text-center text-[11px] text-[#FDD835]">
+              <AlertTriangle
+                size={14}
+                className="shrink-0"
+              />
+
+              <span>
+                {language === "si"
+                  ? `${selectedCropData.si} ${text.onlyScanLeaves}`
+                  : `${text.onlyScanLeaves}: ${selectedCropData.en}`}
+              </span>
             </div>
           </div>
-          <LangToggle lang={lang} toggleLang={toggleLang} />
-        </div>
+
+          <LanguageToggle
+            language={language}
+            onToggle={
+              toggleLanguage
+            }
+            label={
+              text.changeLanguage
+            }
+          />
+        </header>
 
         {modelLoading && (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '20px' }}>
-            <div style={{ width: '60px', height: '60px', borderRadius: '50%', border: '4px solid rgba(255,255,255,0.3)', borderTopColor: '#fff' }} />
-            <p style={{ color: '#fff', fontSize: 'clamp(16px, 1.5vw, 24px)', margin: 0 }}>{t.scan_loading}</p>
-            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 'clamp(12px, 1vw, 16px)', margin: 0 }}>{t.scan_loading_sub}</p>
-          </div>
+          <section className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
+            <LoaderCircle
+              size={58}
+              strokeWidth={3}
+              className="animate-spin text-[#4CAF50]"
+            />
+
+            <p className="text-lg font-semibold text-white">
+              {text.loadingModel}
+            </p>
+
+            <p className="text-sm text-white/50">
+              {
+                text.loadingModelSub
+              }
+            </p>
+          </section>
         )}
 
         {modelError && (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '20px', padding: '24px' }}>
-            <p style={{ color: '#EF5350', fontSize: 'clamp(16px, 1.5vw, 22px)', textAlign: 'center' }}>{modelError}</p>
-            <button onClick={handleReset} style={{ background: '#2E7D32', color: '#fff', border: 'none', borderRadius: '14px', padding: 'clamp(10px, 1.5vw, 16px) clamp(24px, 3vw, 40px)', fontSize: 'clamp(14px, 1.2vw, 18px)', cursor: 'pointer' }}>
-              {t.scan_try_again}
+          <section className="flex flex-1 flex-col items-center justify-center gap-5 px-6 text-center">
+            <AlertTriangle
+              size={52}
+              className="text-red-400"
+            />
+
+            <p className="max-w-md text-base font-medium text-red-400">
+              {modelError}
+            </p>
+
+            <button
+              type="button"
+              onClick={handleReset}
+              className="flex items-center gap-2 rounded-xl bg-[#1B5E20] px-6 py-3 font-semibold text-white transition-colors hover:bg-[#2E7D32] focus:outline-none focus:ring-2 focus:ring-[#4CAF50]"
+            >
+              <RefreshCw
+                size={18}
+              />
+
+              {text.tryAgain}
             </button>
-          </div>
+          </section>
         )}
 
-        {!modelLoading && !modelError && (
-          <>
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '20px', padding: '20px' }}>
-              <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 'clamp(13px, 1.2vw, 18px)', textAlign: 'center', margin: 0 }}>{t.scan_place_leaf}</p>
-              <div style={{ position: 'relative', width: 'min(60vw, 60vh, 500px)', height: 'min(60vw, 60vh, 500px)' }}>
-                <video ref={videoRef} autoPlay playsInline muted
-                  style={{ width: '100%', height: '100%', borderRadius: '20px', objectFit: 'cover', display: 'block' }} />
-                {[
-                  { top: 0, left: 0, borderTop: '4px solid #4CAF50', borderLeft: '4px solid #4CAF50', borderRadius: '6px 0 0 0' },
-                  { top: 0, right: 0, borderTop: '4px solid #4CAF50', borderRight: '4px solid #4CAF50', borderRadius: '0 6px 0 0' },
-                  { bottom: 0, left: 0, borderBottom: '4px solid #4CAF50', borderLeft: '4px solid #4CAF50', borderRadius: '0 0 0 6px' },
-                  { bottom: 0, right: 0, borderBottom: '4px solid #4CAF50', borderRight: '4px solid #4CAF50', borderRadius: '0 0 6px 0' },
-                ].map((corner, i) => (
-                  <div key={i} style={{ position: 'absolute', width: 'clamp(24px, 4%, 40px)', height: 'clamp(24px, 4%, 40px)', ...corner }} />
-                ))}
-              </div>
-              <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 'clamp(11px, 1vw, 15px)', textAlign: 'center', margin: 0 }}>{t.scan_good_light}</p>
-            </div>
+        {!modelLoading &&
+          !modelError && (
+            <>
+              <section className="flex flex-1 flex-col items-center justify-center gap-4 px-5">
+                <p className="text-center text-sm text-white/70">
+                  {text.placeLeaf}
+                </p>
 
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '32px', paddingBottom: 'clamp(32px, 5vw, 64px)' }}>
-              {/* Image Upload Button */}
-              <label style={{
-                width: '56px', height: '56px', borderRadius: '50%',
-                background: 'rgba(255, 255, 255, 0.2)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer', transition: 'background 0.3s', flexShrink: 0
-              }}
-              title={t.scan_upload_img}
-              >
-                <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path d="M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3ZM19 19H5V5H19V19ZM14.14 11.86L11.39 15.4L9.43 13.04L6.5 17H17.5L14.14 11.86Z" fill="#ffffff"/>
-                </svg>
-              </label>
+                <div className="relative aspect-square w-[min(78vw,60vh,500px)]">
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className="h-full w-full rounded-[20px] object-cover"
+                  />
 
-              {/* Shutter Button */}
-              <button onClick={captureAndPredict} disabled={predicting} style={{
-                width: 'clamp(72px, 8vw, 100px)', height: 'clamp(72px, 8vw, 100px)',
-                borderRadius: '50%', background: predicting ? '#81C784' : '#fff',
-                border: '5px solid rgba(255,255,255,0.35)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: predicting ? 'not-allowed' : 'pointer', boxSizing: 'border-box'
-              }}>
-                {predicting
-                  ? <div style={{ width: '40%', height: '40%', borderRadius: '50%', border: '4px solid #4CAF50', borderTopColor: 'transparent' }} />
-                  : <div style={{ width: '78%', height: '78%', borderRadius: '50%', background: '#4CAF50' }} />
-                }
-              </button>
+                  <span className="absolute left-0 top-0 h-9 w-9 rounded-tl-md border-l-4 border-t-4 border-[#4CAF50]" />
 
-              {/* Spacing element to keep the shutter button perfectly centered */}
-              <div style={{ width: '56px', height: '56px', flexShrink: 0 }} />
-            </div>
-          </>
-        )}
-      </div>
+                  <span className="absolute right-0 top-0 h-9 w-9 rounded-tr-md border-r-4 border-t-4 border-[#4CAF50]" />
+
+                  <span className="absolute bottom-0 left-0 h-9 w-9 rounded-bl-md border-b-4 border-l-4 border-[#4CAF50]" />
+
+                  <span className="absolute bottom-0 right-0 h-9 w-9 rounded-br-md border-b-4 border-r-4 border-[#4CAF50]" />
+                </div>
+
+                {cameraError ? (
+                  <p className="max-w-md text-center text-sm text-yellow-300">
+                    {cameraError}
+                  </p>
+                ) : (
+                  <p className="text-center text-xs text-white/40">
+                    {text.goodLight}
+                  </p>
+                )}
+              </section>
+
+              {/* Camera controls */}
+              <section className="flex items-center justify-center gap-8 px-6 pb-10 pt-5">
+                <label
+                  title={
+                    text.uploadImage
+                  }
+                  className="flex h-14 w-14 cursor-pointer items-center justify-center rounded-full bg-white/20 text-white transition-colors hover:bg-white/30 focus-within:ring-2 focus-within:ring-white"
+                >
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={
+                      handleImageUpload
+                    }
+                    className="hidden"
+                  />
+
+                  <ImagePlus
+                    size={25}
+                    strokeWidth={2}
+                  />
+                </label>
+
+                <button
+                  type="button"
+                  onClick={
+                    captureAndPredict
+                  }
+                  disabled={
+                    predicting ||
+                    !model
+                  }
+                  aria-label={
+                    text.captureImage
+                  }
+                  title={
+                    text.captureImage
+                  }
+                  className="flex h-20 w-20 items-center justify-center rounded-full border-[5px] border-white/35 bg-white transition-colors disabled:cursor-not-allowed disabled:bg-[#A5D6A7]"
+                >
+                  {predicting ? (
+                    <LoaderCircle
+                      size={34}
+                      className="animate-spin text-[#1B5E20]"
+                    />
+                  ) : (
+                    <span className="flex h-[78%] w-[78%] items-center justify-center rounded-full bg-[#4CAF50]">
+                      <Camera
+                        size={28}
+                        className="text-white"
+                      />
+                    </span>
+                  )}
+                </button>
+
+                <div className="h-14 w-14" />
+              </section>
+            </>
+          )}
+      </main>
     );
   }
 
-  // ── STEP 3: Results ──
-  if (step === 'result' && treatment) {
+  if (
+    step === "result" &&
+    treatment &&
+    result
+  ) {
+    const treatmentSections = [
+      {
+        label:
+          text.chemicalTreatment,
+
+        value: result.isUncertain
+          ? text.uncertainChemical
+          : treatment.chemical,
+
+        headingClassName:
+          "text-blue-700",
+      },
+
+      {
+        label:
+          text.organicTreatment,
+
+        value:
+          treatment.organic,
+
+        headingClassName:
+          "text-[#2E7D32]",
+      },
+
+      {
+        label:
+          text.prevention,
+
+        value:
+          treatment.prevention,
+
+        headingClassName:
+          "text-[#E65100]",
+      },
+    ];
+
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#F9FBF7' }}>
-        <div style={{ background: '#1B5E20', padding: 'clamp(36px, 5vw, 64px) clamp(20px, 4vw, 60px) clamp(20px, 3vw, 40px)', borderRadius: '0 0 24px 24px', boxShadow: '0 4px 20px rgba(0,0,0,0.15)', position: 'sticky', top: 0, zIndex: 10 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
-            <button onClick={handleReset} style={{ width: 'clamp(40px, 4vw, 56px)', height: 'clamp(40px, 4vw, 56px)', borderRadius: '50%', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', flexShrink: 0 }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M19 12H5M12 5L5 12L12 19" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-              </svg>
+      <main className="min-h-screen bg-[#F9FBF7] font-sans">
+        <canvas
+          ref={canvasRef}
+          className="hidden"
+        />
+
+        {/* Result header */}
+        <header className="sticky top-0 z-20 rounded-b-3xl bg-[#1B5E20] px-4 pb-5 pt-8 shadow-[0_4px_20px_rgba(0,0,0,0.15)] sm:px-6">
+          <div className="mx-auto flex w-full max-w-[800px] items-center gap-3">
+            <button
+              type="button"
+              onClick={handleReset}
+              aria-label={
+                text.scanAgain
+              }
+              title={text.scanAgain}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/20 text-white transition-colors hover:bg-white/30 focus:outline-none focus:ring-2 focus:ring-white"
+            >
+              <ArrowLeft
+                size={21}
+                strokeWidth={2.4}
+              />
             </button>
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-              <h1 style={{ color: '#fff', fontSize: 'clamp(18px, 2.2vw, 26px)', fontWeight: '700', margin: 0 }}>Analysis Results</h1>
-              <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 'clamp(12px, 1.2vw, 15px)', margin: '2px 0 0', fontWeight: '500' }}>විශ්ලේෂණ ප්‍රතිඵල</p>
+
+            <div className="min-w-0 flex-1">
+              <h1 className="truncate text-xl font-bold text-white">
+                {
+                  text.analysisResults
+                }
+              </h1>
+
+              <p className="mt-0.5 truncate text-xs font-medium text-white/75">
+                {
+                  text.analysisResultsSub
+                }
+              </p>
             </div>
-            <LangToggle lang={lang} toggleLang={toggleLang} />
-            <button onClick={speakResult} style={{ width: 'clamp(44px, 4.5vw, 60px)', height: 'clamp(44px, 4.5vw, 60px)', borderRadius: '50%', background: '#FDD835', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', flexShrink: 0, boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path d="M11 5L6 9H2V15H6L11 19V5Z" fill="#1B5E20"/>
-                <path d="M19.07 4.93C20.96 6.82 22 9.35 22 12C22 14.65 20.96 17.18 19.07 19.07" stroke="#1B5E20" strokeWidth="2" strokeLinecap="round"/>
-                <path d="M15.54 8.46C16.48 9.4 17 10.67 17 12C17 13.33 16.48 14.6 15.54 15.54" stroke="#1B5E20" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
+
+            <LanguageToggle
+              language={language}
+              onToggle={
+                toggleLanguage
+              }
+              label={
+                text.changeLanguage
+              }
+            />
+
+            <button
+              type="button"
+              onClick={speakResult}
+              aria-label="Read result aloud"
+              title="Read result aloud"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#FDD835] text-[#1B5E20] shadow-md transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-white"
+            >
+              <Speaker
+                size={23}
+                strokeWidth={2.2}
+              />
             </button>
           </div>
-        </div>
+        </header>
 
-        <div style={{ flex: 1, padding: 'clamp(20px, 3vw, 48px) clamp(16px, 4vw, 32px)', display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '800px', margin: '0 auto', width: '100%', boxSizing: 'border-box', paddingBottom: '48px' }}>
-
+        <section className="mx-auto flex w-full max-w-[800px] flex-col gap-5 px-4 py-6 pb-12 sm:px-6">
           {result.isUncertain && (
-            <div style={{
-              background: '#FFFDE7',
-              border: '1.5px solid #FBC02D',
-              borderRadius: '20px',
-              padding: '20px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '16px',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
-            }}>
-              <div style={{
-                width: '48px', height: '48px', borderRadius: '50%', background: '#FFF9C4',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
-              }}>
-                <span style={{ fontSize: '24px' }}>⚠️</span>
+            <article className="flex items-start gap-4 rounded-[20px] border-2 border-[#FBC02D] bg-[#FFFDE7] p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#FFF9C4] text-[#F57F17]">
+                <AlertTriangle
+                  size={25}
+                />
               </div>
+
               <div>
-                <h4 style={{ color: '#F57F17', margin: '0 0 4px 0', fontSize: 'clamp(14px, 1.2vw, 18px)', fontWeight: '700' }}>
-                  {lang === 'si' ? 'අවිනිශ්චිත ස්කෑන් පරීක්ෂණයකි' : 'Uncertain Scan Result'}
-                </h4>
-                <p style={{ color: '#5D4037', margin: 0, fontSize: 'clamp(12px, 1vw, 15px)', lineHeight: '1.4' }}>
-                  {lang === 'si' 
-                    ? `මෙම රෝග විනිශ්චය 30% - 59% අතර අවිනිශ්චිත මට්ටමක පවතී. නිවැරදි රසායනික ප්‍රතිකාර භාවිතයට පෙර, වඩාත් හොඳ ආලෝකයකින් පත්‍රය ලඟට කර නැවත ස්කෑන් කිරීමට කාරුණික වන්න.` 
-                    : `This match is uncertain (30% - 59% confidence). Before applying chemical treatments, please scan again closer to the leaf under better lighting.`
+                <h2 className="font-bold text-[#F57F17]">
+                  {
+                    text.uncertainTitle
+                  }
+                </h2>
+
+                <p className="mt-1 text-sm leading-6 text-[#5D4037]">
+                  {
+                    text.uncertainDescription
+                  }
+                </p>
+              </div>
+            </article>
+          )}
+
+          {navigationError && (
+            <article
+              role="alert"
+              className="flex items-start gap-3 rounded-[20px] border-2 border-red-300 bg-red-50 p-4 text-red-700"
+            >
+              <AlertTriangle
+                size={21}
+                className="mt-0.5 shrink-0"
+              />
+
+              <p className="text-sm font-medium leading-6">
+                {navigationError}
+              </p>
+            </article>
+          )}
+
+          {capturedImage && (
+            <article className="rounded-[20px] border border-[#E0E0E0] bg-white p-5 shadow-[0_4px_16px_rgba(0,0,0,0.08)]">
+              <h2 className="mb-3 font-semibold text-[#1B5E20]">
+                {
+                  text.capturedImage
+                }
+              </h2>
+
+              <div className="relative flex max-h-[320px] items-center justify-center overflow-hidden rounded-2xl bg-[#F4F6F0] shadow-inner">
+                <img
+                  src={capturedImage}
+                  alt={
+                    text.capturedImage
+                  }
+                  className="max-h-[320px] max-w-full object-contain"
+                />
+
+                <span className="absolute right-3 top-3 rounded-full bg-black/65 px-3 py-1 text-xs font-medium text-white">
+                  {
+                    result.confidence
+                  }
+                  % {text.match}
+                </span>
+              </div>
+            </article>
+          )}
+
+          {/* Disease summary */}
+          <article className="rounded-[20px] border border-[#E0E0E0] bg-white px-6 py-5 shadow-[0_4px_16px_rgba(0,0,0,0.08)]">
+            <h2 className="text-2xl font-bold text-[#1B5E20] sm:text-3xl">
+              {result.siName}
+            </h2>
+
+            <p className="mt-1 text-lg font-semibold text-[#795548]">
+              {result.enName}
+            </p>
+
+            <div className="mt-5 flex items-center justify-between text-sm">
+              <span className="font-medium text-[#888888]">
+                {text.confidence}
+              </span>
+
+              <span className="font-bold text-gray-800">
+                {
+                  result.confidence
+                }
+                %
+              </span>
+            </div>
+
+            <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-[#E8E8E8]">
+              <div
+                className="h-full rounded-full bg-[#4CAF50] transition-all duration-700"
+                style={{
+                  width: `${Math.min(
+                    Number(
+                      result.confidence
+                    ),
+                    100
+                  )}%`,
+                }}
+              />
+            </div>
+          </article>
+
+          {/* Description */}
+          <article className="rounded-[20px] border border-[#E0E0E0] bg-white px-6 py-5 shadow-[0_4px_16px_rgba(0,0,0,0.08)]">
+            <h2 className="font-semibold text-[#1B5E20]">
+              {text.description}
+            </h2>
+
+            <p className="mt-3 text-sm leading-7 text-[#555555] sm:text-base">
+              {
+                treatment.symptoms
+              }
+            </p>
+          </article>
+
+          {/* Treatment steps */}
+          <article className="rounded-[20px] border border-[#E0E0E0] bg-white p-6 shadow-[0_4px_16px_rgba(0,0,0,0.08)]">
+            <h2 className="mb-5 font-semibold text-[#1B5E20]">
+              {
+                text.treatmentSteps
+              }
+            </h2>
+
+            <div className="flex flex-col">
+              {treatmentSections.map(
+                (
+                  section,
+                  index
+                ) => (
+                  <div
+                    key={
+                      section.label
+                    }
+                    className={`flex items-start gap-4 ${
+                      index <
+                      treatmentSections.length -
+                        1
+                        ? "mb-4 border-b border-[#F0F0F0] pb-4"
+                        : ""
+                    }`}
+                  >
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#4CAF50] text-sm font-bold text-white">
+                      {index + 1}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <h3
+                        className={`text-sm font-semibold ${section.headingClassName}`}
+                      >
+                        {
+                          section.label
+                        }
+                      </h3>
+
+                      <p className="mt-1 text-sm leading-6 text-[#555555]">
+                        {
+                          section.value
+                        }
+                      </p>
+                    </div>
+
+                    <CheckCircle2
+                      size={20}
+                      className="mt-1 shrink-0 text-[#E0E0E0]"
+                    />
+                  </div>
+                )
+              )}
+            </div>
+          </article>
+
+          {/* View details */}
+          <button
+            type="button"
+            onClick={
+              handleViewDetails
+            }
+            className="flex w-full items-center justify-between rounded-[20px] border-[2.5px] border-[#4CAF50] bg-white px-5 py-4 text-left shadow-[0_4px_12px_rgba(0,0,0,0.03)] transition-all hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#4CAF50]"
+          >
+            <div className="flex items-center gap-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#E8F5E9] text-[#4CAF50]">
+                <CircleHelp
+                  size={21}
+                />
+              </div>
+
+              <div>
+                <p className="font-bold text-[#1B5E20]">
+                  {text.viewDetails}
+                </p>
+
+                <p className="mt-0.5 text-xs font-medium text-[#888888]">
+                  {
+                    text.viewDetailsSub
                   }
                 </p>
               </div>
             </div>
-          )}
 
-          {capturedImage && (
-            <div style={{ background: '#fff', borderRadius: '20px', boxShadow: '0 4px 16px rgba(0,0,0,0.08)', padding: '20px' }}>
-              <h3 style={{ color: '#1B5E20', fontSize: 'clamp(15px, 1.5vw, 18px)', fontWeight: '600', marginBottom: '14px', marginTop: 0 }}>
-                Captured Image / ග්‍රහණය කළ රූපය
-              </h3>
-              <div style={{ 
-                position: 'relative', 
-                borderRadius: '16px', 
-                overflow: 'hidden', 
-                maxHeight: '320px', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                background: '#f4f6f0',
-                boxShadow: 'inset 0 0 10px rgba(0,0,0,0.05)'
-              }}>
-                <img src={capturedImage} alt="captured" style={{ 
-                  maxWidth: '100%', 
-                  maxHeight: '320px', 
-                  width: 'auto',
-                  height: 'auto',
-                  objectFit: 'contain', 
-                  display: 'block' 
-                }} />
-                <div style={{ position: 'absolute', top: '12px', right: '12px', background: 'rgba(0,0,0,0.65)', color: '#fff', padding: '4px 14px', borderRadius: '20px', fontSize: 'clamp(11px, 1vw, 14px)', fontWeight: '500' }}>
-                  {result.confidence}% match
-                </div>
+            <ChevronRight
+              size={24}
+              className="shrink-0 text-[#4CAF50]"
+            />
+          </button>
+
+          {/* Local outbreak map */}
+          <button
+            type="button"
+            onClick={
+              handleViewHeatmap
+            }
+            disabled={
+              result.disease ===
+              "unknown"
+            }
+            className="flex w-full items-center justify-between rounded-[20px] bg-gradient-to-r from-[#1B5E20] to-[#4CAF50] px-5 py-4 text-left text-white shadow-[0_4px_16px_rgba(46,125,50,0.3)] transition-all hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#4CAF50] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <div className="flex items-center gap-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/20">
+                <MapPinned
+                  size={21}
+                />
               </div>
-            </div>
-          )}
 
-          <div style={{ background: '#fff', borderRadius: '20px', boxShadow: '0 4px 16px rgba(0,0,0,0.08)', padding: '20px 24px' }}>
-            <h2 style={{ color: '#1B5E20', fontSize: 'clamp(22px, 3vw, 32px)', fontWeight: '700', margin: '0 0 4px 0', fontFamily: 'system-ui, sans-serif' }}>
-              {result.siName}
-            </h2>
-            <p style={{ color: '#795548', fontSize: 'clamp(16px, 1.8vw, 20px)', fontWeight: '600', margin: '0 0 20px 0' }}>
-              {result.enName}
-            </p>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: 'clamp(12px, 1vw, 14px)' }}>
-              <span style={{ color: '#888', fontWeight: '500' }}>Confidence / විශ්වාසය</span>
-              <span style={{ color: '#333', fontWeight: '700' }}>{result.confidence}%</span>
-            </div>
-            <div style={{ height: '10px', background: '#e8e8e8', borderRadius: '8px', overflow: 'hidden' }}>
-              <div style={{ height: '100%', borderRadius: '8px', transition: 'width 0.6s ease', background: '#4CAF50', width: `${result.confidence}%` }} />
-            </div>
-          </div>
-
-          <div style={{ background: '#fff', borderRadius: '20px', boxShadow: '0 4px 16px rgba(0,0,0,0.08)', padding: '20px 24px' }}>
-            <h3 style={{ color: '#1B5E20', fontSize: 'clamp(15px, 1.5vw, 18px)', fontWeight: '600', margin: '0 0 12px 0' }}>
-              විස්තරය / Description
-            </h3>
-            <p style={{ color: '#555', fontSize: 'clamp(14px, 1.2vw, 17px)', lineHeight: 1.6, margin: 0 }}>
-              {treatment.symptoms}
-            </p>
-          </div>
-
-          <div style={{ background: '#fff', borderRadius: '20px', boxShadow: '0 4px 16px rgba(0,0,0,0.08)', padding: '24px' }}>
-            <h3 style={{ color: '#1B5E20', fontSize: 'clamp(15px, 1.5vw, 18px)', fontWeight: '600', margin: '0 0 20px 0' }}>
-              ප්‍රතිකාර පියවර / Treatment Steps
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {[
-                { label: lang === 'si' ? 'රසායනික ප්‍රතිකාර / Chemical Treatment' : 'Chemical Treatment / රසායනික ප්‍රතිකාර', text: result.isUncertain ? (lang === 'si' ? 'අවිනිශ්චිත ස්කෑන් පරීක්ෂණ සඳහා රසායනික ප්‍රතිකාර නිර්දේශ නොකෙරේ. කරුණාකර නැවත ස්කෑන් කරන්න.' : 'Chemical recommendations are withheld for uncertain scans. Please scan again.') : treatment.chemical, color: '#1565C0' },
-                { label: lang === 'si' ? 'කාබනික ප්‍රතිකාර / Organic Treatment' : 'Organic Treatment / කාබනික ප්‍රතිකාර', text: treatment.organic, color: '#2E7D32' },
-                { label: lang === 'si' ? 'වැළැක්වීම / Prevention' : 'Prevention / වැළැක්වීම', text: treatment.prevention, color: '#E65100' }
-              ].map((s, index) => (
-                <div key={index} style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', justifyContent: 'space-between', paddingBottom: index < 2 ? '16px' : '0', borderBottom: index < 2 ? '1px solid #f0f0f0' : 'none' }}>
-                  <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', flex: 1 }}>
-                    <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#4CAF50', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: '700', flexShrink: 0, marginTop: '2px' }}>
-                      {index + 1}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <p style={{ color: s.color, fontSize: 'clamp(12px, 1vw, 15px)', fontWeight: '600', margin: '0 0 4px 0' }}>
-                        {s.label}
-                      </p>
-                      <p style={{ color: '#555', fontSize: 'clamp(13px, 1.2vw, 16px)', lineHeight: 1.5, margin: 0 }}>
-                        {s.text}
-                      </p>
-                    </div>
-                  </div>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, marginTop: '8px' }}>
-                    <circle cx="12" cy="12" r="10" stroke="#e0e0e0" strokeWidth="1.5"/>
-                    <path d="M8 12L11 15L16 9" stroke="#e0e0e0" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <button onClick={handleViewDetails} style={{
-            background: '#fff',
-            border: '2.5px solid #4CAF50',
-            borderRadius: '20px',
-            padding: '16px 20px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
-            cursor: 'pointer',
-            width: '100%',
-            transition: 'transform 0.2s, box-shadow 0.2s',
-            fontFamily: 'inherit'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', textAlign: 'left' }}>
-              <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#E8F5E9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="12" r="10" stroke="#4CAF50" strokeWidth="2"/>
-                  <path d="M12 8V12M12 16H12.01" stroke="#4CAF50" strokeWidth="2" strokeLinecap="round"/>
-                </svg>
-              </div>
               <div>
-                <p style={{ color: '#1B5E20', fontSize: 'clamp(15px, 1.4vw, 18px)', fontWeight: '700', margin: 0 }}>
-                  View Full Details
+                <p className="font-bold">
+                  {
+                    text.outbreakMap
+                  }
                 </p>
-                <p style={{ color: '#888', fontSize: 'clamp(11px, 1vw, 13px)', margin: '2px 0 0', fontWeight: '500' }}>
-                  සම්පූර්ණ තොරතුරු බලන්න
+
+                <p className="mt-0.5 text-xs font-medium text-white/70">
+                  {
+                    text.outbreakMapSub
+                  }
                 </p>
               </div>
             </div>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
-              <path d="M9 5L16 12L9 19" stroke="#4CAF50" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+
+            <ChevronRight
+              size={24}
+              className="shrink-0"
+            />
           </button>
 
-          <button onClick={() => router.push('/heatmap')} style={{
-            background: 'linear-gradient(to right, #1B5E20, #4CAF50)',
-            borderRadius: '20px',
-            padding: '16px 20px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            border: 'none',
-            cursor: 'pointer',
-            width: '100%',
-            boxShadow: '0 4px 16px rgba(46,125,50,0.3)',
-            transition: 'transform 0.2s, box-shadow 0.2s',
-            fontFamily: 'inherit'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', textAlign: 'left' }}>
-              <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 2C8.13 2 5 5.13 5 9C5 14.25 12 22 12 22C12 22 19 14.25 19 9C19 5.13 15.87 2 12 2Z" stroke="white" strokeWidth="2"/>
-                  <circle cx="12" cy="9" r="3" stroke="white" strokeWidth="2"/>
-                </svg>
-              </div>
-              <div>
-                <p style={{ color: '#fff', fontSize: 'clamp(15px, 1.4vw, 18px)', fontWeight: '700', margin: 0 }}>
-                  Check Outbreak Map
-                </p>
-                <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 'clamp(11px, 1vw, 13px)', margin: '2px 0 0', fontWeight: '500' }}>
-                  ව්‍යාප්ති සිතියම බලන්න
-                </p>
-              </div>
-            </div>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
-              <path d="M9 5L16 12L9 19" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
+          {/* Scan again */}
+          <button
+            type="button"
+            onClick={handleReset}
+            className="flex w-full items-center justify-center gap-2 rounded-[20px] border-2 border-[#2E7D32] bg-transparent px-5 py-4 font-semibold text-[#2E7D32] transition-colors hover:bg-[#E8F5E9] focus:outline-none focus:ring-2 focus:ring-[#4CAF50]"
+          >
+            <RefreshCw
+              size={19}
+            />
 
-          <button onClick={handleReset} style={{
-            background: 'transparent',
-            border: '2px solid #2E7D32',
-            borderRadius: '20px',
-            padding: '16px',
-            color: '#2E7D32',
-            fontWeight: '600',
-            fontSize: 'clamp(15px, 1.5vw, 18px)',
-            cursor: 'pointer',
-            width: '100%',
-            fontFamily: 'inherit',
-            transition: 'background 0.2s'
-          }}>
-            {t.results_scan_again}
+            {text.scanAgain}
           </button>
-
-        </div>
-      </div>
+        </section>
+      </main>
     );
   }
 
   return null;
 }
 
+function ScanLoadingFallback() {
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-[#F9FBF7]">
+      <LoaderCircle
+        size={56}
+        strokeWidth={3}
+        className="animate-spin text-[#4CAF50]"
+        aria-label="Loading"
+      />
+    </main>
+  );
+}
+
 export default function ScanPage() {
   return (
-    <Suspense fallback={
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F9FBF7' }}>
-        <div style={{ width: '60px', height: '60px', borderRadius: '50%', border: '4px solid #4CAF50', borderTopColor: 'transparent' }} />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <ScanLoadingFallback />
+      }
+    >
       <ScanContent />
     </Suspense>
   );

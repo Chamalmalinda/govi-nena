@@ -1,307 +1,738 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useLang } from '@/lib/LanguageContext';
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import {
+  ChevronDown,
+  Eye,
+  EyeOff,
+  Leaf,
+  LoaderCircle,
+  LockKeyhole,
+  Mail,
+  MapPin,
+  Phone,
+  UserRound,
+} from "lucide-react";
+
+import {
+  dismissToast,
+  showError,
+  showLoading,
+  showSuccess,
+  showWarning,
+} from "@/lib/toast";
+
+const registerText = {
+  si: {
+    appName: "ගොවි නැණ",
+    tagline: "ලියාපදිංචි වන්න",
+    subtitle: "නව ගිණුමක් සාදන්න",
+
+    fullNameLabel: "සම්පූර්ණ නම",
+    fullNamePlaceholder: "ඔබගේ සම්පූර්ණ නම ඇතුළත් කරන්න",
+
+    emailLabel: "විද්‍යුත් තැපෑල",
+    emailPlaceholder: "ඔබගේ විද්‍යුත් තැපැල් ලිපිනය ඇතුළත් කරන්න",
+
+    phoneLabel: "දුරකථන අංකය",
+    phonePlaceholder: "07XXXXXXXX",
+
+    districtLabel: "දිස්ත්‍රික්කය",
+    districtPlaceholder: "දිස්ත්‍රික්කය තෝරන්න",
+
+    passwordLabel: "මුරපදය",
+    passwordPlaceholder: "මුරපදයක් සාදන්න",
+
+    registerButton: "ගිණුම සාදන්න",
+    registering: "ගිණුම සාදමින්...",
+
+    alreadyAccount: "දැනටමත් ගිණුමක් තිබේද?",
+    loginLink: "පුරනය වන්න",
+
+    invalidPhone:
+      "වලංගු ශ්‍රී ලංකා දුරකථන අංකයක් ඇතුළත් කරන්න. උදා: 0771234567",
+
+    invalidEmail:
+      "වලංගු විද්‍යුත් තැපැල් ලිපිනයක් ඇතුළත් කරන්න.",
+
+    weakPassword:
+      "මුරපදය අවම වශයෙන් අක්ෂර 6ක් අඩංගු විය යුතුය.",
+
+    registrationFailed: "ලියාපදිංචි වීම අසාර්ථකයි.",
+    serverError: "සේවාදායකය සමඟ සම්බන්ධ විය නොහැක.",
+    unexpectedError:
+      "අනපේක්ෂිත දෝෂයක් ඇති විය. නැවත උත්සාහ කරන්න.",
+
+    showPassword: "මුරපදය පෙන්වන්න",
+    hidePassword: "මුරපදය සඟවන්න",
+    changeLanguage: "භාෂාව වෙනස් කරන්න",
+
+    footer: "🌾 ශ්‍රී ලාංකික ගොවීන් සවිබල ගැන්වීම",
+  },
+
+  en: {
+    appName: "Govi Nena",
+    tagline: "Register",
+    subtitle: "Create your new account",
+
+    fullNameLabel: "Full Name",
+    fullNamePlaceholder: "Enter your full name",
+
+    emailLabel: "Email Address",
+    emailPlaceholder: "Enter your email address",
+
+    phoneLabel: "Phone Number",
+    phonePlaceholder: "07XXXXXXXX",
+
+    districtLabel: "District",
+    districtPlaceholder: "Select your district",
+
+    passwordLabel: "Password",
+    passwordPlaceholder: "Create a password",
+
+    registerButton: "Create Account",
+    registering: "Creating account...",
+
+    alreadyAccount: "Already have an account?",
+    loginLink: "Sign In",
+
+    invalidPhone:
+      "Enter a valid Sri Lankan phone number. Example: 0771234567",
+
+    invalidEmail: "Enter a valid email address.",
+
+    weakPassword:
+      "The password must contain at least 6 characters.",
+
+    registrationFailed: "Registration failed.",
+    serverError: "Cannot connect to the server.",
+    unexpectedError:
+      "An unexpected error occurred. Please try again.",
+
+    showPassword: "Show password",
+    hidePassword: "Hide password",
+    changeLanguage: "Change language",
+
+    footer: "🌾 Empowering Sri Lankan Farmers",
+  },
+};
+
+const districts = [
+  { value: "Colombo", en: "Colombo", si: "කොළඹ" },
+  { value: "Gampaha", en: "Gampaha", si: "ගම්පහ" },
+  { value: "Kalutara", en: "Kalutara", si: "කළුතර" },
+  { value: "Kandy", en: "Kandy", si: "මහනුවර" },
+  { value: "Matale", en: "Matale", si: "මාතලේ" },
+  {
+    value: "Nuwara Eliya",
+    en: "Nuwara Eliya",
+    si: "නුවරඑළිය",
+  },
+  { value: "Galle", en: "Galle", si: "ගාල්ල" },
+  { value: "Matara", en: "Matara", si: "මාතර" },
+  {
+    value: "Hambantota",
+    en: "Hambantota",
+    si: "හම්බන්තොට",
+  },
+  { value: "Jaffna", en: "Jaffna", si: "යාපනය" },
+  { value: "Mannar", en: "Mannar", si: "මන්නාරම" },
+  {
+    value: "Vavuniya",
+    en: "Vavuniya",
+    si: "වවුනියාව",
+  },
+  {
+    value: "Anuradhapura",
+    en: "Anuradhapura",
+    si: "අනුරාධපුර",
+  },
+  {
+    value: "Polonnaruwa",
+    en: "Polonnaruwa",
+    si: "පොළොන්නරුව",
+  },
+  {
+    value: "Kurunegala",
+    en: "Kurunegala",
+    si: "කුරුණෑගල",
+  },
+  {
+    value: "Puttalam",
+    en: "Puttalam",
+    si: "පුත්තලම",
+  },
+  { value: "Badulla", en: "Badulla", si: "බදුල්ල" },
+  {
+    value: "Monaragala",
+    en: "Monaragala",
+    si: "මොණරාගල",
+  },
+  {
+    value: "Ratnapura",
+    en: "Ratnapura",
+    si: "රත්නපුර",
+  },
+  { value: "Kegalle", en: "Kegalle", si: "කෑගල්ල" },
+  {
+    value: "Trincomalee",
+    en: "Trincomalee",
+    si: "ත්‍රිකුණාමලය",
+  },
+  {
+    value: "Batticaloa",
+    en: "Batticaloa",
+    si: "මඩකළපුව",
+  },
+  { value: "Ampara", en: "Ampara", si: "අම්පාර" },
+  {
+    value: "Kilinochchi",
+    en: "Kilinochchi",
+    si: "කිලිනොච්චිය",
+  },
+  {
+    value: "Mullaitivu",
+    en: "Mullaitivu",
+    si: "මුලතිව්",
+  },
+];
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { t, lang, toggleLang } = useLang();
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [district, setDistrict] = useState('');
-  const [password, setPassword] = useState('');
+
+  const [language, setLanguage] = useState("si");
+
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [district, setDistrict] = useState("");
+  const [password, setPassword] = useState("");
+
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [phoneError, setPhoneError] = useState('');
-  const [formError, setFormError] = useState('');
 
-  const validatePhone = (number) => {
-    const cleaned = number.replace(/\s/g, '');
-    return /^(?:0|94|\+94)?(?:7[0-9])\d{7}$/.test(cleaned);
+  const [phoneError, setPhoneError] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [formError, setFormError] = useState("");
+
+  const text = registerText[language];
+
+  const apiUrl =
+    process.env.NEXT_PUBLIC_API_URL ||
+    "http://localhost:5000";
+
+  useEffect(() => {
+    try {
+      const savedLanguage = localStorage.getItem(
+        "govi_nena_language"
+      );
+
+      if (savedLanguage === "si" || savedLanguage === "en") {
+        setLanguage(savedLanguage);
+      }
+    } catch (error) {
+      console.error(
+        "Could not load the saved language:",
+        error
+      );
+    }
+  }, []);
+
+  const toggleLanguage = () => {
+    const nextLanguage = language === "si" ? "en" : "si";
+
+    setLanguage(nextLanguage);
+
+    try {
+      localStorage.setItem(
+        "govi_nena_language",
+        nextLanguage
+      );
+    } catch (error) {
+      console.error(
+        "Could not save the selected language:",
+        error
+      );
+    }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const validatePhone = (number) => {
+    const cleanedNumber = number.replace(/[\s-]/g, "");
+
+    return /^(?:0|94|\+94)?7\d{8}$/.test(cleanedNumber);
+  };
+
+  const validateEmail = (emailAddress) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+      emailAddress.trim()
+    );
+  };
+
+  const clearErrors = () => {
+    setPhoneError("");
+    setEmailError("");
+    setPasswordError("");
+    setFormError("");
+  };
+
+  const validateForm = () => {
+    let isValid = true;
+
+    clearErrors();
+
+    if (!validateEmail(email)) {
+      setEmailError(text.invalidEmail);
+      isValid = false;
+    }
 
     if (!validatePhone(phone)) {
-      setPhoneError(lang === 'si'
-        ? 'වලංගු ශ්‍රී ලංකා දුරකථන අංකයක් ඇතුළු කරන්න (07XXXXXXXX)'
-        : 'Enter a valid Sri Lanka phone number (07XXXXXXXX)'
-      );
+      setPhoneError(text.invalidPhone);
+      isValid = false;
+    }
+
+    if (password.length < 6) {
+      setPasswordError(text.weakPassword);
+      isValid = false;
+    }
+
+    return isValid;
+  };
+
+const handleSubmit = async (event) => {
+  event.preventDefault();
+
+  if (!validateForm()) {
+    return;
+  }
+
+  setLoading(true);
+
+  const loadingToast = showLoading(
+    language === "si"
+      ? "ගිණුම සාදමින්..."
+      : "Creating account..."
+  );
+
+  try {
+    const response = await fetch(
+      `${apiUrl}/api/auth/register`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim().toLowerCase(),
+          phone: phone.replace(/[\s-]/g, ""),
+          district,
+          password,
+        }),
+      }
+    );
+
+    const data = await response
+      .json()
+      .catch(() => ({}));
+
+    dismissToast(loadingToast);
+
+    if (!response.ok) {
+      const message =
+        data.message || text.registrationFailed;
+
+      setFormError(message);
+      showError(message);
       return;
     }
 
-    setPhoneError('');
-    setFormError('');
-    setLoading(true);
+    showSuccess(
+      language === "si"
+        ? "ගිණුම සාර්ථකව සාදන ලදී!"
+        : "Account created successfully!"
+    );
 
-    try {
-      const response = await fetch('http://localhost:5000/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, phone, district, password })
-      });
+    router.push("/login?registered=true");
+  } catch (error) {
+    dismissToast(loadingToast);
 
-      const data = await response.json();
+    console.error(
+      "Registration request failed:",
+      error
+    );
 
-      if (response.ok) {
-        router.push('/login?registered=true');
-      } else {
-        setFormError(data.message || (lang === 'si' ? 'ලියාපදිංචි වීම අසාර්ථකයි' : 'Registration failed'));
-      }
-    } catch {
-      setFormError(lang === 'si' ? 'සේවාදායකය සමඟ සම්බන්ධ විය නොහැක' : 'Cannot connect to server');
-    } finally {
-      setLoading(false);
-    }
-  };
+    setFormError(text.serverError);
+    showError(text.serverError);
+  } finally {
+    setLoading(false);
+  }
+};
 
-  const districts = t.districts;
-
-  const inputStyle = {
-    width: '100%', paddingLeft: '40px', paddingRight: '12px',
-    paddingTop: '10px', paddingBottom: '10px',
-    fontSize: '14px', borderRadius: '12px',
-    border: '2px solid rgba(76,175,80,0.3)', color: '#333',
-    outline: 'none', boxSizing: 'border-box', background: '#fff'
-  };
+  const inputClassName =
+    "w-full rounded-xl border-2 border-[#C8E6C9] bg-white py-2.5 pl-10 pr-3 text-sm text-gray-800 outline-none transition-colors placeholder:text-gray-400 focus:border-[#4CAF50] disabled:cursor-not-allowed disabled:bg-gray-100";
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#F9FBF7', fontFamily: 'system-ui, sans-serif' }}>
-
-      {/* Language Toggle */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '12px 16px 0' }}>
-        <button
-          onClick={toggleLang}
-          style={{
-            width: '72px', height: '32px', borderRadius: '16px',
-            background: lang === 'si' ? '#4CAF50' : '#888',
-            position: 'relative', border: 'none', cursor: 'pointer',
-            transition: 'background 0.3s',
-          }}
-        >
-          <div style={{
-            width: '26px', height: '26px', borderRadius: '50%', background: '#fff',
-            position: 'absolute', top: '3px',
-            left: lang === 'si' ? '3px' : '43px',
-            transition: 'left 0.3s',
-            boxShadow: '0 1px 4px rgba(0,0,0,0.2)'
-          }} />
-          <span style={{
-            position: 'absolute', fontSize: '10px', fontWeight: '700', color: '#fff',
-            left: lang === 'si' ? '33px' : '8px',
-            top: '7px', transition: 'left 0.3s', userSelect: 'none'
-          }}>
-            {lang === 'si' ? 'සිං' : 'EN'}
-          </span>
-        </button>
-      </div>
-
+    <main className="flex min-h-screen flex-col bg-[#F9FBF7] font-sans">
       {/* Header */}
-      <div style={{ background: 'linear-gradient(to bottom, #1B5E20, #4CAF50)', padding: '14px 24px 20px', borderRadius: '0 0 28px 28px', textAlign: 'center', color: '#fff' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-          <div style={{ background: 'rgba(255,255,255,0.2)', borderRadius: '14px', padding: '10px' }}>
-            <svg width="38" height="38" viewBox="0 0 80 80" fill="none">
-              <path d="M40 10C40 10 20 25 20 42C20 54 28 63 40 68C52 63 60 54 60 42C60 25 40 10 40 10Z" fill="white" opacity="0.9"/>
-              <circle cx="40" cy="42" r="10" fill="#2E7D32"/>
-            </svg>
-          </div>
-          <h1 style={{ fontSize: '22px', fontWeight: '700', margin: 0 }}>{t.app_name}</h1>
-          <p style={{ fontSize: '13px', color: '#FDD835', margin: 0, fontWeight: '600' }}>{t.register_title}</p>
-          <p style={{ fontSize: '11px', opacity: 0.85, margin: 0 }}>{t.register_sub}</p>
+      <header className="rounded-b-2xl bg-[#1B5E20] px-6 pb-5 pt-5 text-white shadow-[0_4px_20px_rgba(0,0,0,0.15)]">
+        {/* Language toggle inside header */}
+        <div className="mb-4 flex items-center justify-end">
+          <button
+            type="button"
+            onClick={toggleLanguage}
+            aria-label={text.changeLanguage}
+            title={text.changeLanguage}
+            className={`relative h-8 w-[72px] rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-white ${
+              language === "si"
+                ? "bg-[#4CAF50]"
+                : "bg-[#888888]"
+            }`}
+          >
+            <span
+              className={`absolute top-[3px] h-[26px] w-[26px] rounded-full bg-white shadow-[0_1px_4px_rgba(0,0,0,0.2)] transition-all duration-300 ${
+                language === "si"
+                  ? "left-[3px]"
+                  : "left-[43px]"
+              }`}
+            />
+
+            <span
+              className={`absolute top-[7px] select-none text-[10px] font-bold text-white transition-all duration-300 ${
+                language === "si"
+                  ? "left-[33px]"
+                  : "left-[8px]"
+              }`}
+            >
+              {language === "si" ? "සිං" : "EN"}
+            </span>
+          </button>
         </div>
-      </div>
 
-      {/* Form */}
-      <div style={{ flex: 1, padding: '14px 16px', overflowY: 'auto' }}>
-        <div style={{ maxWidth: '420px', margin: '0 auto' }}>
-          <div style={{ background: '#fff', borderRadius: '20px', padding: '18px', marginBottom: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
+        {/* Logo and title */}
+        <div className="flex flex-col items-center gap-2 text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#4CAF50]">
+            <Leaf
+              size={34}
+              strokeWidth={2}
+              className="text-white"
+            />
+          </div>
 
-            {formError && (
-              <div style={{ background: '#FFEBEE', border: '1.5px solid #EF5350', borderRadius: '12px', padding: '10px 14px', marginBottom: '14px', color: '#C62828', fontSize: '13px', fontWeight: '500' }}>
-                ⚠️ {formError}
-              </div>
-            )}
+          <h1 className="text-[24px] font-bold">
+            {text.appName}
+          </h1>
 
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <p className="text-sm font-semibold text-[#C8E6C9]">
+            {text.tagline}
+          </p>
 
-              {/* Name */}
+          <p className="text-xs text-white/80">
+            {text.subtitle}
+          </p>
+        </div>
+      </header>
+
+      {/* Registration form */}
+      <section className="flex-1 px-4 py-5">
+        <div className="mx-auto w-full max-w-[420px]">
+          <div className="rounded-2xl border border-[#E0E0E0] bg-white p-5 shadow-[0_4px_16px_rgba(0,0,0,0.06)]">
+
+
+            <form
+              onSubmit={handleSubmit}
+              className="flex flex-col gap-4"
+            >
+              {/* Full name */}
               <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#1B5E20', marginBottom: '5px' }}>{t.full_name}</label>
-                <div style={{ position: 'relative' }}>
-                  <div style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                      <circle cx="12" cy="8" r="4" stroke="#4CAF50" strokeWidth="2"/>
-                      <path d="M4 20C4 17 7.6 14 12 14C16.4 14 20 17 20 20" stroke="#4CAF50" strokeWidth="2" strokeLinecap="round"/>
-                    </svg>
-                  </div>
+                <label
+                  htmlFor="name"
+                  className="mb-1.5 block text-[13px] font-semibold text-[#1B5E20]"
+                >
+                  {text.fullNameLabel}
+                </label>
+
+                <div className="relative">
+                  <UserRound
+                    size={18}
+                    strokeWidth={2}
+                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#4CAF50]"
+                  />
+
                   <input
+                    id="name"
+                    name="name"
                     type="text"
+                    autoComplete="name"
                     value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder={lang === 'si' ? 'කමල් පෙරේරා' : 'John Perera'}
+                    onChange={(event) =>
+                      setName(event.target.value)
+                    }
+                    placeholder={text.fullNamePlaceholder}
                     required
-                    style={inputStyle}
-                    onFocus={e => e.target.style.borderColor = '#4CAF50'}
-                    onBlur={e => e.target.style.borderColor = 'rgba(76,175,80,0.3)'}
+                    disabled={loading}
+                    className={inputClassName}
                   />
                 </div>
               </div>
 
               {/* Email */}
               <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#1B5E20', marginBottom: '5px' }}>Email</label>
-                <div style={{ position: 'relative' }}>
-                  <div style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                      <path d="M20 4H4C2.9 4 2.01 4.9 2.01 6L2 18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6C22 4.9 21.1 4 20 4ZM20 8L12 13L4 8V6L12 11L20 6V8Z" fill="#4CAF50"/>
-                    </svg>
-                  </div>
+                <label
+                  htmlFor="email"
+                  className="mb-1.5 block text-[13px] font-semibold text-[#1B5E20]"
+                >
+                  {text.emailLabel}
+                </label>
+
+                <div className="relative">
+                  <Mail
+                    size={18}
+                    strokeWidth={2}
+                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#4CAF50]"
+                  />
+
                   <input
+                    id="email"
+                    name="email"
                     type="email"
+                    inputMode="email"
+                    autoComplete="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="example@gmail.com"
+                    onChange={(event) => {
+                      setEmail(event.target.value);
+
+                      if (emailError) {
+                        setEmailError("");
+                      }
+                    }}
+                    placeholder={text.emailPlaceholder}
                     required
-                    style={inputStyle}
-                    onFocus={e => e.target.style.borderColor = '#4CAF50'}
-                    onBlur={e => e.target.style.borderColor = 'rgba(76,175,80,0.3)'}
+                    disabled={loading}
+                    aria-invalid={Boolean(emailError)}
+                    className={`${inputClassName} ${
+                      emailError
+                        ? "border-red-400 focus:border-red-500"
+                        : ""
+                    }`}
                   />
                 </div>
+
               </div>
 
               {/* Phone */}
               <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#1B5E20', marginBottom: '5px' }}>{t.phone}</label>
-                <div style={{ position: 'relative' }}>
-                  <div style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                      <path d="M6.6 10.8C7.8 13.2 9.8 15.2 12.2 16.4L14.1 14.5C14.4 14.2 14.8 14.1 15.1 14.3C16.2 14.7 17.4 14.9 18.6 14.9C19.4 14.9 20 15.5 20 16.3V19.4C20 20.2 19.4 20.8 18.6 20.8C10.1 20.8 3.2 13.9 3.2 5.4C3.2 4.6 3.8 4 4.6 4H7.7C8.5 4 9.1 4.6 9.1 5.4C9.1 6.6 9.3 7.8 9.7 8.9C9.9 9.3 9.8 9.7 9.5 10L7.6 11.9L6.6 10.8Z" fill="#4CAF50"/>
-                    </svg>
-                  </div>
+                <label
+                  htmlFor="phone"
+                  className="mb-1.5 block text-[13px] font-semibold text-[#1B5E20]"
+                >
+                  {text.phoneLabel}
+                </label>
+
+                <div className="relative">
+                  <Phone
+                    size={18}
+                    strokeWidth={2}
+                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#4CAF50]"
+                  />
+
                   <input
+                    id="phone"
+                    name="phone"
                     type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="0771234567"
+                    onChange={(event) => {
+                      setPhone(event.target.value);
+
+                      if (phoneError) {
+                        setPhoneError("");
+                      }
+                    }}
+                    placeholder={text.phonePlaceholder}
                     required
-                    style={inputStyle}
-                    onFocus={e => e.target.style.borderColor = '#4CAF50'}
-                    onBlur={e => e.target.style.borderColor = 'rgba(76,175,80,0.3)'}
+                    disabled={loading}
+                    aria-invalid={Boolean(phoneError)}
+                    className={`${inputClassName} ${
+                      phoneError
+                        ? "border-red-400 focus:border-red-500"
+                        : ""
+                    }`}
                   />
                 </div>
-                {phoneError && (
-                  <p style={{ fontSize: '12px', color: '#C62828', margin: '4px 0 0' }}>⚠️ {phoneError}</p>
-                )}
+
               </div>
 
               {/* District */}
               <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#1B5E20', marginBottom: '5px' }}>{t.district}</label>
-                <div style={{ position: 'relative' }}>
-                  <div style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                      <path d="M12 2C8.7 2 6 4.7 6 8C6 12.5 12 22 12 22C12 22 18 12.5 18 8C18 4.7 15.3 2 12 2Z" stroke="#4CAF50" strokeWidth="2"/>
-                      <circle cx="12" cy="8" r="2.5" stroke="#4CAF50" strokeWidth="2"/>
-                    </svg>
-                  </div>
+                <label
+                  htmlFor="district"
+                  className="mb-1.5 block text-[13px] font-semibold text-[#1B5E20]"
+                >
+                  {text.districtLabel}
+                </label>
+
+                <div className="relative">
+                  <MapPin
+                    size={18}
+                    strokeWidth={2}
+                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#4CAF50]"
+                  />
+
                   <select
+                    id="district"
+                    name="district"
                     value={district}
-                    onChange={(e) => setDistrict(e.target.value)}
+                    onChange={(event) =>
+                      setDistrict(event.target.value)
+                    }
                     required
-                    style={{ ...inputStyle, paddingRight: '32px', appearance: 'none' }}
-                    onFocus={e => e.target.style.borderColor = '#4CAF50'}
-                    onBlur={e => e.target.style.borderColor = 'rgba(76,175,80,0.3)'}
+                    disabled={loading}
+                    className={`${inputClassName} appearance-none pr-10`}
                   >
-                    <option value="">{t.district_placeholder}</option>
-                    {districts.map(d => (
-                      <option key={d} value={d}>{d}</option>
+                    <option value="">
+                      {text.districtPlaceholder}
+                    </option>
+
+                    {districts.map((districtItem) => (
+                      <option
+                        key={districtItem.value}
+                        value={districtItem.value}
+                      >
+                        {districtItem[language]}
+                      </option>
                     ))}
                   </select>
-                  <div style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                      <path d="M4 6L8 10L12 6" stroke="#795548" strokeWidth="1.5"/>
-                    </svg>
-                  </div>
+
+                  <ChevronDown
+                    size={18}
+                    strokeWidth={2}
+                    className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#795548]"
+                  />
                 </div>
               </div>
 
               {/* Password */}
               <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#1B5E20', marginBottom: '5px' }}>{t.password}</label>
-                <div style={{ position: 'relative' }}>
-                  <div style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                      <rect x="5" y="11" width="14" height="10" rx="2" stroke="#4CAF50" strokeWidth="2"/>
-                      <path d="M8 11V7C8 4.8 9.8 3 12 3C14.2 3 16 4.8 16 7V11" stroke="#4CAF50" strokeWidth="2"/>
-                      <circle cx="12" cy="16" r="1.5" fill="#4CAF50"/>
-                    </svg>
-                  </div>
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    required
-                    style={{ ...inputStyle, paddingRight: '44px' }}
-                    onFocus={e => e.target.style.borderColor = '#4CAF50'}
-                    onBlur={e => e.target.style.borderColor = 'rgba(76,175,80,0.3)'}
+                <label
+                  htmlFor="password"
+                  className="mb-1.5 block text-[13px] font-semibold text-[#1B5E20]"
+                >
+                  {text.passwordLabel}
+                </label>
+
+                <div className="relative">
+                  <LockKeyhole
+                    size={18}
+                    strokeWidth={2}
+                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#4CAF50]"
                   />
+
+                  <input
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="new-password"
+                    value={password}
+                    onChange={(event) => {
+                      setPassword(event.target.value);
+
+                      if (passwordError) {
+                        setPasswordError("");
+                      }
+                    }}
+                    placeholder={text.passwordPlaceholder}
+                    required
+                    minLength={6}
+                    disabled={loading}
+                    aria-invalid={Boolean(passwordError)}
+                    className={`${inputClassName} pr-11 ${
+                      passwordError
+                        ? "border-red-400 focus:border-red-500"
+                        : ""
+                    }`}
+                  />
+
                   <button
                     type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                    onClick={() =>
+                      setShowPassword(
+                        (previousValue) => !previousValue
+                      )
+                    }
+                    aria-label={
+                      showPassword
+                        ? text.hidePassword
+                        : text.showPassword
+                    }
+                    title={
+                      showPassword
+                        ? text.hidePassword
+                        : text.showPassword
+                    }
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-[#795548] transition-colors hover:bg-[#E8F5E9] hover:text-[#1B5E20] focus:outline-none focus:ring-2 focus:ring-[#4CAF50]"
                   >
                     {showPassword ? (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                        <path d="M17.94 17.94A10.07 10.07 0 0112 20C7 20 2.73 16.39 1 12C1.92 9.88 3.38 8.06 5.19 6.69M9.9 4.24A9.12 9.12 0 0112 4C17 4 21.27 7.61 23 12C22.18 14.01 20.83 15.75 19.09 17.08M3 3L21 21" stroke="#795548" strokeWidth="2" strokeLinecap="round"/>
-                      </svg>
+                      <EyeOff
+                        size={18}
+                        strokeWidth={2}
+                      />
                     ) : (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                        <path d="M1 12C2.73 7.61 7 4 12 4C17 4 21.27 7.61 23 12C21.27 16.39 17 20 12 20C7 20 2.73 16.39 1 12Z" stroke="#795548" strokeWidth="2"/>
-                        <circle cx="12" cy="12" r="3" stroke="#795548" strokeWidth="2"/>
-                      </svg>
+                      <Eye
+                        size={18}
+                        strokeWidth={2}
+                      />
                     )}
                   </button>
                 </div>
+
               </div>
 
-              {/* Submit */}
+              {/* Submit button */}
               <button
                 type="submit"
                 disabled={loading}
-                style={{
-                  width: '100%', padding: '12px', borderRadius: '12px', fontSize: '15px',
-                  fontWeight: '700', color: '#fff', border: 'none', cursor: loading ? 'not-allowed' : 'pointer',
-                  background: loading ? '#81C784' : 'linear-gradient(to right, #1B5E20, #4CAF50)',
-                  boxShadow: loading ? 'none' : '0 4px 16px rgba(46,125,50,0.4)',
-                  marginTop: '4px'
-                }}
+                className="mt-1 flex w-full items-center justify-center gap-2 rounded-xl bg-[#1B5E20] px-4 py-3 text-[15px] font-bold text-white shadow-[0_4px_14px_rgba(27,94,32,0.28)] transition-colors hover:bg-[#2E7D32] focus:outline-none focus:ring-2 focus:ring-[#4CAF50] focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-[#A5D6A7] disabled:shadow-none"
               >
-                {loading ? 'Loading...' : t.register_btn}
-              </button>
+                {loading && (
+                  <LoaderCircle
+                    size={18}
+                    className="animate-spin"
+                  />
+                )}
 
+                {loading
+                  ? text.registering
+                  : text.registerButton}
+              </button>
             </form>
           </div>
 
-          {/* Login Link */}
-          <div style={{ textAlign: 'center', paddingBottom: '8px' }}>
-            <p style={{ fontSize: '13px', color: '#666', margin: '0 0 6px' }}>{t.has_account}</p>
-            <Link href="/login" style={{ fontSize: '14px', fontWeight: '700', color: '#1B5E20', textDecoration: 'none' }}>
-              {t.login_link}
+          {/* Login link */}
+          <div className="pb-2 pt-4 text-center">
+            <p className="text-[13px] text-[#795548]">
+              {text.alreadyAccount}
+            </p>
+
+            <Link
+              href="/login"
+              className="mt-1 inline-block text-sm font-bold text-[#1B5E20] transition-colors hover:text-[#4CAF50] hover:underline"
+            >
+              {text.loginLink}
             </Link>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Footer */}
-      <div style={{ padding: '10px 24px', textAlign: 'center', background: '#E8F5E9' }}>
-        <p style={{ fontSize: '12px', color: '#558B2F', margin: 0 }}>{t.footer}</p>
-      </div>
-
-    </div>
+      <footer className="bg-[#E8F5E9] px-6 py-3 text-center">
+        <p className="text-xs font-medium text-[#2E7D32]">
+          {text.footer}
+        </p>
+      </footer>
+    </main>
   );
 }

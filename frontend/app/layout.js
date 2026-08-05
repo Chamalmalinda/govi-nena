@@ -2,6 +2,7 @@ import { Geist } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "@/lib/LanguageContext";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
+import AppToaster from "@/components/AppToaster";
 
 const geist = Geist({ subsets: ["latin"] });
 
@@ -28,6 +29,7 @@ export default function RootLayout({ children }) {
         <ServiceWorkerRegister />
         <LanguageProvider>
           {children}
+          <AppToaster />
         </LanguageProvider>
       </body>
     </html>

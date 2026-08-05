@@ -12,12 +12,18 @@ const pwaConfig = withPWA({
   register: false,
   skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
+  // /scan?crop=paddy, /scan?crop=tomato etc. must all resolve to the same
+  // precached /scan document when offline — otherwise the query string
+  // makes every crop a "different" URL that was never precached.
+  ignoreURLParametersMatching: [/^crop$/],
   runtimeCaching: [
     // AI model files (model.json + .bin weight shards) — must be cached
     // explicitly so offline disease detection actually works once a crop
     // model has been loaded at least once while online.
     {
-      urlPattern: /^\/models\/.*\.(?:json|bin)$/,
+      urlPattern: ({ url }) =>
+        url.pathname.startsWith('/models/') &&
+        (url.pathname.endsWith('.json') || url.pathname.endsWith('.bin')),
       handler: 'CacheFirst',
       options: {
         cacheName: 'govi-nena-ai-models',
