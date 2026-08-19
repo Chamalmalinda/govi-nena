@@ -3,59 +3,32 @@
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import {
-  Eye,
-  EyeOff,
-  Leaf,
-  LoaderCircle,
-  LockKeyhole,
-  Phone,
-} from "lucide-react";
-import {
-  dismissToast,
-  showError,
-  showLoading,
-  showSuccess,
-} from "@/lib/toast";
+import {Eye,EyeOff,Leaf,LoaderCircle,LockKeyhole,Phone,} from "lucide-react";
+import {dismissToast,showError,showLoading,showSuccess,} from "@/lib/toast";
 
 const loginText = {
   si: {
     appName: "ගොවි නැණ",
     tagline: "ගොවි නැණ",
     subtitle: "ඔබේ බෝග සෞඛ්‍ය සහකාරිය",
-
     signIn: "පුරනය වන්න",
     signInSubtitle: "ඔබගේ ගිණුමට ප්‍රවේශ වන්න",
-
     phoneLabel: "දුරකථන අංකය",
     phonePlaceholder: "ඔබගේ දුරකථන අංකය ඇතුළත් කරන්න",
-
     passwordLabel: "මුරපදය",
     passwordPlaceholder: "ඔබගේ මුරපදය ඇතුළත් කරන්න",
-
     forgotPassword: "මුරපදය අමතකද?",
     loginButton: "පුරනය වන්න",
     loggingIn: "පුරනය වෙමින්...",
-
     noAccount: "ගිණුමක් නැද්ද?",
     registerLink: "ලියාපදිංචි වන්න",
-
-    registrationSuccess:
-      "ලියාපදිංචිය සාර්ථකයි! කරුණාකර ඔබගේ ගිණුමට පුරනය වන්න.",
-
-    invalidCredentials:
-      "දුරකථන අංකය හෝ මුරපදය වැරදියි.",
-
-    serverError:
-      "සේවාදායකය සමඟ සම්බන්ධ විය නොහැක.",
-
-    unexpectedError:
-      "අනපේක්ෂිත දෝෂයක් ඇති විය. නැවත උත්සාහ කරන්න.",
-
+    registrationSuccess: "ලියාපදිංචිය සාර්ථකයි! කරුණාකර ඔබගේ ගිණුමට පුරනය වන්න.",
+    invalidCredentials: "දුරකථන අංකය හෝ මුරපදය වැරදියි.",
+    serverError:"සේවාදායකය සමඟ සම්බන්ධ විය නොහැක.",
+    unexpectedError: "අනපේක්ෂිත දෝෂයක් ඇති විය. නැවත උත්සාහ කරන්න.",
     showPassword: "මුරපදය පෙන්වන්න",
     hidePassword: "මුරපදය සඟවන්න",
     changeLanguage: "භාෂාව වෙනස් කරන්න",
-
     footer: "🌾 ශ්‍රී ලාංකික ගොවීන් සවිබල ගැන්වීම",
   },
 
@@ -63,39 +36,24 @@ const loginText = {
     appName: "Govi Nena",
     tagline: "Smart Farming Assistant",
     subtitle: "Your Crop Health Assistant",
-
     signIn: "Sign In",
     signInSubtitle: "Access your account",
-
     phoneLabel: "Phone Number",
     phonePlaceholder: "Enter your phone number",
-
     passwordLabel: "Password",
     passwordPlaceholder: "Enter your password",
-
     forgotPassword: "Forgot Password?",
     loginButton: "Sign In",
     loggingIn: "Signing in...",
-
     noAccount: "Don't have an account?",
     registerLink: "Register",
-
-    registrationSuccess:
-      "Registration successful! Please sign in to your account.",
-
-    invalidCredentials:
-      "Invalid phone number or password.",
-
-    serverError:
-      "Cannot connect to the server.",
-
-    unexpectedError:
-      "An unexpected error occurred. Please try again.",
-
+    registrationSuccess: "Registration successful! Please sign in to your account.",
+    invalidCredentials: "Invalid phone number or password.",
+    serverError: "Cannot connect to the server.",
+    unexpectedError: "An unexpected error occurred. Please try again.",
     showPassword: "Show password",
     hidePassword: "Hide password",
     changeLanguage: "Change language",
-
     footer: "🌾 Empowering Sri Lankan Farmers",
   },
 };
@@ -112,13 +70,8 @@ function LoginContent() {
   const [loginError, setLoginError] = useState("");
 
   const text = loginText[language];
-
-  const registered =
-    searchParams.get("registered") === "true";
-
-  const apiUrl =
-    process.env.NEXT_PUBLIC_API_URL ||
-    "http://localhost:5000";
+  const registered = searchParams.get("registered") === "true";
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
   useEffect(() => {
     try {

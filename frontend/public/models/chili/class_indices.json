@@ -1,0 +1,9 @@
+{
+    "Bacterial Spot": 0,
+    "Cercospora Leaf Spot": 1,
+    "Curl Virus": 2,
+    "Healthy Leaf": 3,
+    "Nutrition Deficiency": 4,
+    "White spot": 5,
+    "not_chili": 6
+}

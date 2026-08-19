@@ -35,6 +35,11 @@ import {
 
 import { useModel } from "@/hooks/useModel";
 import { getTreatmentOffline } from "@/lib/offlineStorage";
+import {
+  getCachedGPSCoords,
+  getDistrictCoords,
+  getUserStorageKey,
+} from "@/lib/location";
 
 const scanText = {
   si: {
@@ -184,6 +189,7 @@ const CROPS = {
       "downy_mildew",
       "hispa",
       "normal",
+      "not_paddy",
       "tungro",
     ],
   },
@@ -204,6 +210,8 @@ const CROPS = {
       "Tomato___Tomato_Yellow_Leaf_Curl_Virus",
       "Tomato___Tomato_mosaic_virus",
       "Tomato___healthy",
+      "not_tomato",
+      
     ],
   },
 
@@ -219,6 +227,7 @@ const CROPS = {
       "Healthy Leaf",
       "Nutrition Deficiency",
       "White spot",
+      "not_chili",
     ],
   },
 };
@@ -495,37 +504,31 @@ function ScanContent() {
     }
   };
 
-  const getCoordinates = () =>
-    new Promise((resolve) => {
-      if (!navigator.geolocation) {
-        resolve([80.601, 7.901]);
-        return;
-      }
+  /**
+   * Returns the best available [longitude, latitude] for the current scan.
+   *
+   * Priority:
+   *   1. Fresh GPS coordinates cached by the home-page permission banner.
+   *   2. The centroid of the user’s registered district.
+   *
+   * The old hardcoded fallback [80.601, 7.901] (North Central Province)
+   * has been removed — it produced misleading outbreak data.
+   */
+  const getCoordinates = async () => {
+    // 1. Try the GPS cache written by the home-page location banner.
+    const cached = getCachedGPSCoords();
+    if (cached) return cached;
 
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          resolve([
-            position.coords.longitude,
-            position.coords.latitude,
-          ]);
-        },
-
-        (error) => {
-          console.warn(
-            "Location access failed. Using fallback coordinates:",
-            error.message
-          );
-
-          resolve([80.601, 7.901]);
-        },
-
-        {
-          enableHighAccuracy: true,
-          timeout: 8000,
-          maximumAge: 30000,
-        }
+    // 2. Fall back to the user’s registered district centroid.
+    try {
+      const storedUser = JSON.parse(
+        localStorage.getItem('govi_nena_user') || '{}'
       );
-    });
+      return getDistrictCoords(storedUser.district || 'Kandy');
+    } catch {
+      return getDistrictCoords('Kandy');
+    }
+  };
 
   const logOutbreakScan = async (
     diseaseName,
@@ -534,6 +537,9 @@ function ScanContent() {
   ) => {
     if (
       diseaseName === "unknown" ||
+      diseaseName === "normal" ||
+      diseaseName.toLowerCase().startsWith("not_") ||
+      diseaseName.toLowerCase().includes("healthy") ||
       !Array.isArray(coordinates) ||
       coordinates.length !== 2
     ) {
@@ -690,12 +696,12 @@ function ScanContent() {
 
     try {
       localStorage.setItem(
-        "govi_nena_last_scan_coords",
+        getUserStorageKey("govi_nena_last_scan_coords"),
         JSON.stringify(coordinates)
       );
 
       localStorage.setItem(
-        "govi_nena_last_scan_crop",
+        getUserStorageKey("govi_nena_last_scan_crop"),
         selectedCrop
       );
     } catch (error) {
@@ -771,17 +777,17 @@ function ScanContent() {
 
     try {
       localStorage.setItem(
-        "govi_nena_last_scan_image",
+        getUserStorageKey("govi_nena_last_scan_image"),
         imageData
       );
 
       localStorage.setItem(
-        "govi_nena_last_result",
+        getUserStorageKey("govi_nena_last_result"),
         JSON.stringify(resultMetadata)
       );
 
       localStorage.setItem(
-        "govi_nena_last_scan_crop",
+        getUserStorageKey("govi_nena_last_scan_crop"),
         selectedCrop
       );
 
@@ -1115,7 +1121,7 @@ function ScanContent() {
     try {
       const storedCoordinates =
         localStorage.getItem(
-          "govi_nena_last_scan_coords"
+          getUserStorageKey("govi_nena_last_scan_coords")
         );
 
       if (!storedCoordinates) {
@@ -1154,7 +1160,7 @@ function ScanContent() {
     if (capturedImage) {
       try {
         localStorage.setItem(
-          "govi_nena_last_scan_image",
+          getUserStorageKey("govi_nena_last_scan_image"),
           capturedImage
         );
       } catch (error) {
@@ -1246,17 +1252,17 @@ function ScanContent() {
 
     try {
       localStorage.setItem(
-        "govi_nena_last_scan_crop",
+        getUserStorageKey("govi_nena_last_scan_crop"),
         selectedCrop
       );
 
       localStorage.setItem(
-        "govi_nena_last_result",
+        getUserStorageKey("govi_nena_last_result"),
         JSON.stringify(result)
       );
 
       localStorage.setItem(
-        "govi_nena_last_scan_coords",
+        getUserStorageKey("govi_nena_last_scan_coords"),
         JSON.stringify(coordinates)
       );
     } catch (error) {
@@ -1343,17 +1349,17 @@ function ScanContent() {
 
         const storedImage =
           localStorage.getItem(
-            "govi_nena_last_scan_image"
+            getUserStorageKey("govi_nena_last_scan_image")
           );
 
         const storedResult =
           localStorage.getItem(
-            "govi_nena_last_result"
+            getUserStorageKey("govi_nena_last_result")
           );
 
         const storedCoordinates =
           localStorage.getItem(
-            "govi_nena_last_scan_coords"
+            getUserStorageKey("govi_nena_last_scan_coords")
           );
 
         if (

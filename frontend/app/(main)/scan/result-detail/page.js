@@ -4,6 +4,7 @@ import {Suspense,useEffect,useState,} from "react";
 import {AlertTriangle,ArrowLeft,CalendarDays,CheckCircle2,CloudSun,Droplets,Leaf,LoaderCircle,MapPin,ShieldCheck,Sprout, Thermometer,Wind,} from "lucide-react";
 import {useRouter,useSearchParams,} from "next/navigation";
 import { getTreatmentOffline } from "@/lib/offlineStorage";
+import { getUserStorageKey } from "@/lib/location";
 
 const detailText = {
   si: {
@@ -269,7 +270,7 @@ function ResultDetailContent() {
 
       const storedImage =
         localStorage.getItem(
-          "govi_nena_last_scan_image"
+          getUserStorageKey("govi_nena_last_scan_image")
         );
 
       if (storedImage) {

@@ -158,5 +158,21 @@ export const tomatoTreatments = {
       organic: "Regular monitoring recommended",
       prevention: "Continue good agricultural practices"
     }
+  },
+  'not_tomato': {
+    si: {
+      name: "තක්කාලි පත්‍රයක් නොවේ",
+      symptoms: "ස්කෑන් කරන ලද ඡායාරූපය තක්කාලි පත්‍රයකට අදාළ නොවේ.",
+      chemical: "ප්‍රතිකාර අවශ්‍ය නොවේ.",
+      organic: "කරුණාකර නිවැරදි බෝග පත්‍රයේ ඡායාරූපයක් ලබාදී නැවත උත්සාහ කරන්න.",
+      prevention: "තක්කාලි පත්‍රයක් පමණක් රාමුව ඇතුළත තබා ස්කෑන් කිරීමට වගබලා ගන්න."
+    },
+    en: {
+      name: "Not a Tomato Leaf",
+      symptoms: "The scanned image does not appear to be a tomato leaf.",
+      chemical: "No treatment required.",
+      organic: "Please scan a valid tomato leaf and try again.",
+      prevention: "Ensure only tomato leaves are placed in the camera frame."
+    }
   }
 };

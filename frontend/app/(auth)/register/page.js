@@ -3,72 +3,37 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  ChevronDown,
-  Eye,
-  EyeOff,
-  Leaf,
-  LoaderCircle,
-  LockKeyhole,
-  Mail,
-  MapPin,
-  Phone,
-  UserRound,
-} from "lucide-react";
-
-import {
-  dismissToast,
-  showError,
-  showLoading,
-  showSuccess,
-  showWarning,
-} from "@/lib/toast";
+import {ChevronDown,Eye,EyeOff,Leaf,LoaderCircle,LockKeyhole,Mail,MapPin,Phone,UserRound,} from "lucide-react";
+import {dismissToast,showError,showLoading,showSuccess,showWarning,} from "@/lib/toast";
 
 const registerText = {
   si: {
     appName: "ගොවි නැණ",
     tagline: "ලියාපදිංචි වන්න",
     subtitle: "නව ගිණුමක් සාදන්න",
-
     fullNameLabel: "සම්පූර්ණ නම",
     fullNamePlaceholder: "ඔබගේ සම්පූර්ණ නම ඇතුළත් කරන්න",
-
     emailLabel: "විද්‍යුත් තැපෑල",
     emailPlaceholder: "ඔබගේ විද්‍යුත් තැපැල් ලිපිනය ඇතුළත් කරන්න",
-
     phoneLabel: "දුරකථන අංකය",
     phonePlaceholder: "07XXXXXXXX",
-
     districtLabel: "දිස්ත්‍රික්කය",
     districtPlaceholder: "දිස්ත්‍රික්කය තෝරන්න",
-
     passwordLabel: "මුරපදය",
     passwordPlaceholder: "මුරපදයක් සාදන්න",
-
     registerButton: "ගිණුම සාදන්න",
     registering: "ගිණුම සාදමින්...",
-
     alreadyAccount: "දැනටමත් ගිණුමක් තිබේද?",
     loginLink: "පුරනය වන්න",
-
-    invalidPhone:
-      "වලංගු ශ්‍රී ලංකා දුරකථන අංකයක් ඇතුළත් කරන්න. උදා: 0771234567",
-
-    invalidEmail:
-      "වලංගු විද්‍යුත් තැපැල් ලිපිනයක් ඇතුළත් කරන්න.",
-
-    weakPassword:
-      "මුරපදය අවම වශයෙන් අක්ෂර 6ක් අඩංගු විය යුතුය.",
-
+    invalidPhone: "වලංගු ශ්‍රී ලංකා දුරකථන අංකයක් ඇතුළත් කරන්න. උදා: 0771234567",
+    invalidEmail: "වලංගු විද්‍යුත් තැපැල් ලිපිනයක් ඇතුළත් කරන්න.",
+    weakPassword: "මුරපදය අවම වශයෙන් අක්ෂර 6ක් අඩංගු විය යුතුය.",
     registrationFailed: "ලියාපදිංචි වීම අසාර්ථකයි.",
     serverError: "සේවාදායකය සමඟ සම්බන්ධ විය නොහැක.",
-    unexpectedError:
-      "අනපේක්ෂිත දෝෂයක් ඇති විය. නැවත උත්සාහ කරන්න.",
-
+    unexpectedError:"අනපේක්ෂිත දෝෂයක් ඇති විය. නැවත උත්සාහ කරන්න.",
     showPassword: "මුරපදය පෙන්වන්න",
     hidePassword: "මුරපදය සඟවන්න",
     changeLanguage: "භාෂාව වෙනස් කරන්න",
-
     footer: "🌾 ශ්‍රී ලාංකික ගොවීන් සවිබල ගැන්වීම",
   },
 
@@ -76,45 +41,29 @@ const registerText = {
     appName: "Govi Nena",
     tagline: "Register",
     subtitle: "Create your new account",
-
     fullNameLabel: "Full Name",
     fullNamePlaceholder: "Enter your full name",
-
     emailLabel: "Email Address",
     emailPlaceholder: "Enter your email address",
-
     phoneLabel: "Phone Number",
     phonePlaceholder: "07XXXXXXXX",
-
     districtLabel: "District",
     districtPlaceholder: "Select your district",
-
     passwordLabel: "Password",
     passwordPlaceholder: "Create a password",
-
     registerButton: "Create Account",
     registering: "Creating account...",
-
     alreadyAccount: "Already have an account?",
     loginLink: "Sign In",
-
-    invalidPhone:
-      "Enter a valid Sri Lankan phone number. Example: 0771234567",
-
+    invalidPhone: "Enter a valid Sri Lankan phone number. Example: 0771234567",
     invalidEmail: "Enter a valid email address.",
-
-    weakPassword:
-      "The password must contain at least 6 characters.",
-
+    weakPassword: "The password must contain at least 6 characters.",
     registrationFailed: "Registration failed.",
     serverError: "Cannot connect to the server.",
-    unexpectedError:
-      "An unexpected error occurred. Please try again.",
-
+    unexpectedError: "An unexpected error occurred. Please try again.",
     showPassword: "Show password",
     hidePassword: "Hide password",
     changeLanguage: "Change language",
-
     footer: "🌾 Empowering Sri Lankan Farmers",
   },
 };
@@ -125,104 +74,45 @@ const districts = [
   { value: "Kalutara", en: "Kalutara", si: "කළුතර" },
   { value: "Kandy", en: "Kandy", si: "මහනුවර" },
   { value: "Matale", en: "Matale", si: "මාතලේ" },
-  {
-    value: "Nuwara Eliya",
-    en: "Nuwara Eliya",
-    si: "නුවරඑළිය",
-  },
+  { value: "Nuwara Eliya",en: "Nuwara Eliya",si: "නුවරඑළිය",},
   { value: "Galle", en: "Galle", si: "ගාල්ල" },
   { value: "Matara", en: "Matara", si: "මාතර" },
-  {
-    value: "Hambantota",
-    en: "Hambantota",
-    si: "හම්බන්තොට",
-  },
+  { value: "Hambantota",en: "Hambantota",si: "හම්බන්තොට",},
   { value: "Jaffna", en: "Jaffna", si: "යාපනය" },
   { value: "Mannar", en: "Mannar", si: "මන්නාරම" },
-  {
-    value: "Vavuniya",
-    en: "Vavuniya",
-    si: "වවුනියාව",
-  },
-  {
-    value: "Anuradhapura",
-    en: "Anuradhapura",
-    si: "අනුරාධපුර",
-  },
-  {
-    value: "Polonnaruwa",
-    en: "Polonnaruwa",
-    si: "පොළොන්නරුව",
-  },
-  {
-    value: "Kurunegala",
-    en: "Kurunegala",
-    si: "කුරුණෑගල",
-  },
-  {
-    value: "Puttalam",
-    en: "Puttalam",
-    si: "පුත්තලම",
-  },
+  { value: "Vavuniya",en: "Vavuniya",si: "වවුනියාව",},
+  { value: "Anuradhapura",en: "Anuradhapura",si: "අනුරාධපුර",},
+  { value: "Polonnaruwa",en: "Polonnaruwa",si: "පොළොන්නරුව", },
+  { value: "Kurunegala",en: "Kurunegala",si: "කුරුණෑගල",},
+  { value: "Puttalam",en: "Puttalam",si: "පුත්තලම",},
   { value: "Badulla", en: "Badulla", si: "බදුල්ල" },
-  {
-    value: "Monaragala",
-    en: "Monaragala",
-    si: "මොණරාගල",
-  },
-  {
-    value: "Ratnapura",
-    en: "Ratnapura",
-    si: "රත්නපුර",
-  },
+  { value: "Monaragala", en: "Monaragala", si: "මොණරාගල", },
+  { value: "Ratnapura",en: "Ratnapura",si: "රත්නපුර", },
   { value: "Kegalle", en: "Kegalle", si: "කෑගල්ල" },
-  {
-    value: "Trincomalee",
-    en: "Trincomalee",
-    si: "ත්‍රිකුණාමලය",
-  },
-  {
-    value: "Batticaloa",
-    en: "Batticaloa",
-    si: "මඩකළපුව",
-  },
+  { value: "Trincomalee",en: "Trincomalee",si: "ත්‍රිකුණාමලය",},
+  { value: "Batticaloa",en: "Batticaloa",si: "මඩකළපුව",},
   { value: "Ampara", en: "Ampara", si: "අම්පාර" },
-  {
-    value: "Kilinochchi",
-    en: "Kilinochchi",
-    si: "කිලිනොච්චිය",
-  },
-  {
-    value: "Mullaitivu",
-    en: "Mullaitivu",
-    si: "මුලතිව්",
-  },
+  { value: "Kilinochchi",en: "Kilinochchi",si: "කිලිනොච්චිය",},
+  { value: "Mullaitivu",en: "Mullaitivu",si: "මුලතිව්",},
 ];
 
 export default function RegisterPage() {
+
   const router = useRouter();
-
   const [language, setLanguage] = useState("si");
-
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [district, setDistrict] = useState("");
   const [password, setPassword] = useState("");
-
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-
   const [phoneError, setPhoneError] = useState("");
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [formError, setFormError] = useState("");
-
   const text = registerText[language];
-
-  const apiUrl =
-    process.env.NEXT_PUBLIC_API_URL ||
-    "http://localhost:5000";
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL ||  "http://localhost:5000";
 
   useEffect(() => {
     try {
@@ -307,7 +197,6 @@ const handleSubmit = async (event) => {
   if (!validateForm()) {
     return;
   }
-
   setLoading(true);
 
   const loadingToast = showLoading(
@@ -371,8 +260,7 @@ const handleSubmit = async (event) => {
   }
 };
 
-  const inputClassName =
-    "w-full rounded-xl border-2 border-[#C8E6C9] bg-white py-2.5 pl-10 pr-3 text-sm text-gray-800 outline-none transition-colors placeholder:text-gray-400 focus:border-[#4CAF50] disabled:cursor-not-allowed disabled:bg-gray-100";
+  const inputClassName ="w-full rounded-xl border-2 border-[#C8E6C9] bg-white py-2.5 pl-10 pr-3 text-sm text-gray-800 outline-none transition-colors placeholder:text-gray-400 focus:border-[#4CAF50] disabled:cursor-not-allowed disabled:bg-gray-100";
 
   return (
     <main className="flex min-h-screen flex-col bg-[#F9FBF7] font-sans">
@@ -439,8 +327,6 @@ const handleSubmit = async (event) => {
       <section className="flex-1 px-4 py-5">
         <div className="mx-auto w-full max-w-[420px]">
           <div className="rounded-2xl border border-[#E0E0E0] bg-white p-5 shadow-[0_4px_16px_rgba(0,0,0,0.06)]">
-
-
             <form
               onSubmit={handleSubmit}
               className="flex flex-col gap-4"

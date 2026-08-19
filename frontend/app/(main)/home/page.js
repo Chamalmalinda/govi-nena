@@ -1,29 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
+import { Bell,ChevronRight,CheckCircle2,Home,Leaf,LoaderCircle,LogOut,MapPin,MapPinned,UserRound,} from "lucide-react";
+import { GiTomato, GiWheat, GiChiliPepper,} from "react-icons/gi";
+import { showSuccess } from "@/lib/toast";
 import {
-  
-  Bell,
-  ChevronRight,
-  
-  Home,
-  Leaf,
-  LoaderCircle,
-  LogOut,
-  MapPinned,
-  UserRound,
-
-} from "lucide-react";
-
-import {
-  GiTomato,
-  GiWheat,
-  GiChiliPepper,
-} from "react-icons/gi";
-import {
-  showSuccess,
-} from "@/lib/toast";
+  getCachedGPSCoords,
+  getGPSPermissionStatus,
+  saveGPSCoords,
+  setGPSPermissionStatus,
+  clearGPSState,
+  getLastUserId,
+  setLastUserId,
+  getBestCoords,
+  getUserStorageKey,
+} from "@/lib/location";
 const homeText = {
   si: {
     welcome: "ආයුබෝවන්",
@@ -31,22 +23,28 @@ const homeText = {
     selectCrop: "ඔබේ බෝගය තෝරන්න",
     selectCropSubtitle: "රෝගය හඳුනා ගැනීමට",
     tapToScan: "රෝග හඳුනා ගැනීමට තට්ටු කරන්න",
-
     paddy: "වී",
     tomato: "තක්කාලි",
     chilli: "මිරිස්",
-
     footerMessage: "රෝග හඳුනාගෙන ප්‍රතිකාර සොයන්න",
-
     home: "මුල",
     map: "සිතියම",
     alerts: "ඇඟවීම්",
-
     logoutTitle: "ගිණුමෙන් පිටවන්න",
     changeLanguage: "භාෂාව වෙනස් කරන්න",
-
     loading: "පූරණය වෙමින්...",
     userError: "පරිශීලක තොරතුරු කියවිය නොහැක.",
+    // Location permission banner
+    locationBannerTitle: "ස්ථාන ප්‍රවේශය සක්‍රීය කරන්න",
+    locationBannerDesc:
+      "ඔබේ ගොවිතැනට ආසන්න රෝග ව්‍යාප්ති නිවැරදිව ලුහු කිරීමට GPS ස්ථානය ලබාදෙන්න.",
+    locationBannerAllow: "ස්ථානය ලබාදෙන්න",
+    locationBannerSkip: "දැන් නොව",
+    locationBannerRequesting: "ස්ථානය සොයමින්...",
+    locationBannerGranted: "ස්ථානය සාර්ථකව ලබාගත්තා!",
+    locationBannerDeniedTitle: "ස්ථාන ප්‍රවේශය ප්‍රතික්ෂේප විය",
+    locationBannerDeniedDesc:
+      "Browser සැකසීම් හි GPS සක්‍රීය කර නැවත ලොගින් වන්න. දිස්ත්‍රික්ක ස්ථානය භාවිතා කෙරේ.",
   },
 
   en: {
@@ -55,22 +53,28 @@ const homeText = {
     selectCrop: "Select your crop",
     selectCropSubtitle: "To identify the disease",
     tapToScan: "Tap to scan and diagnose",
-
     paddy: "Paddy",
     tomato: "Tomato",
     chilli: "Chilli",
-
     footerMessage: "Identify diseases and find treatments",
-
     home: "Home",
     map: "Map",
     alerts: "Alerts",
-
     logoutTitle: "Sign out of your account",
     changeLanguage: "Change language",
-
     loading: "Loading...",
     userError: "Unable to read user information.",
+    // Location permission banner
+    locationBannerTitle: "Enable Location Access",
+    locationBannerDesc:
+      "Allow GPS access to accurately track nearby crop disease outbreaks near your farm.",
+    locationBannerAllow: "Allow Location",
+    locationBannerSkip: "Not Now",
+    locationBannerRequesting: "Finding location...",
+    locationBannerGranted: "Location enabled successfully!",
+    locationBannerDeniedTitle: "Location Access Denied",
+    locationBannerDeniedDesc:
+      "Enable GPS in your browser settings and log in again. Your registered district will be used instead.",
   },
 };
 
@@ -79,16 +83,11 @@ const crops = [
     id: "paddy",
     translationKey: "paddy",
     Icon: GiWheat,
-
     borderColor: "border-[#E8F5E9]",
     backgroundColor: "bg-white",
-
-    overlayColor:
-      "bg-gradient-to-br from-[#1B5E20] to-[#4CAF50]",
-
+    overlayColor: "bg-gradient-to-br from-[#1B5E20] to-[#4CAF50]",
     iconBackground: "bg-[#E8F5E9]",
     iconColor: "text-[#1B5E20]",
-
     titleColor: "text-[#1B5E20]",
     arrowColor: "text-[#1B5E20]",
   },
@@ -97,16 +96,11 @@ const crops = [
     id: "tomato",
     translationKey: "tomato",
     Icon: GiTomato,
-
     borderColor: "border-[#FFEBEE]",
     backgroundColor: "bg-white",
-
-    overlayColor:
-      "bg-gradient-to-br from-[#B71C1C] to-[#EF5350]",
-
+    overlayColor: "bg-gradient-to-br from-[#B71C1C] to-[#EF5350]",
     iconBackground: "bg-[#FFEBEE]",
     iconColor: "text-[#B71C1C]",
-
     titleColor: "text-[#1B5E20]",
     arrowColor: "text-[#B71C1C]",
   },
@@ -115,16 +109,11 @@ const crops = [
     id: "chili",
     translationKey: "chilli",
     Icon: GiChiliPepper,
-
     borderColor: "border-[#FFF3E0]",
     backgroundColor: "bg-white",
-
-    overlayColor:
-      "bg-gradient-to-br from-[#E65100] to-[#FF9800]",
-
+    overlayColor: "bg-gradient-to-br from-[#E65100] to-[#FF9800]",
     iconBackground: "bg-[#FFF3E0]",
     iconColor: "text-[#E65100]",
-
     titleColor: "text-[#1B5E20]",
     arrowColor: "text-[#E65100]",
   },
@@ -132,12 +121,21 @@ const crops = [
 
 export default function HomePage() {
   const router = useRouter();
-
+  const pathname = usePathname();
   const [language, setLanguage] = useState("si");
   const [user, setUser] = useState(null);
   const [pageLoading, setPageLoading] = useState(true);
   const [pageError, setPageError] = useState("");
-
+  const [newAlertsCount, setNewAlertsCount] = useState(0);
+  /**
+   * locationPermission tracks the in-page state of the banner.
+   * 'prompt'     → show Allow / Not Now
+   * 'requesting' → spinner on Allow button
+   * 'granted'    → show brief success tick, then hide
+   * 'denied'     → browser rejected — show settings hint
+   * 'skipped'    → user chose Not Now — hide banner
+   */
+  const [locationPermission, setLocationPermission] = useState("prompt");
   const text = homeText[language];
 
   useEffect(() => {
@@ -160,6 +158,42 @@ export default function HomePage() {
 
       const parsedUser = JSON.parse(storedUser);
       setUser(parsedUser);
+
+      // ── Detect a user switch ───────────────────────────────────────────────
+      // GPS permission is stored in localStorage which is shared across
+      // all users on the same device/browser. When a different user logs
+      // in we must wipe the previous user’s GPS state so the new user
+      // is shown their own location permission prompt.
+      const currentUserId = String(parsedUser._id || parsedUser.id || '');
+      const lastUserId = getLastUserId();
+
+      if (lastUserId && lastUserId !== currentUserId) {
+        // A different user has logged in — reset GPS state.
+        clearGPSState();
+      }
+
+      // Always record the current user so the next login can compare.
+      if (currentUserId) setLastUserId(currentUserId);
+      // ─────────────────────────────────────────────────────────────────
+
+      // Sync banner state with what we already know from localStorage.
+      const permStatus = getGPSPermissionStatus();
+      if (permStatus === 'granted') {
+        // If the cache has expired, silently refresh it in the background.
+        const cached = getCachedGPSCoords();
+        if (cached) {
+          setLocationPermission('granted');
+        } else {
+          // Cache expired — ask the browser again silently.
+          setLocationPermission('prompt');
+        }
+      } else if (permStatus === 'denied') {
+        setLocationPermission('denied');
+      } else if (permStatus === 'skipped') {
+        setLocationPermission('skipped');
+      } else {
+        setLocationPermission('prompt');
+      }
     } catch (error) {
       console.error("Could not load user information:", error);
 
@@ -173,6 +207,53 @@ export default function HomePage() {
       setPageLoading(false);
     }
   }, [router]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchNearbyAlerts = async () => {
+      try {
+        const token = localStorage.getItem("govi_nena_token");
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+        
+        // 1. Get user coords (GPS cache or district centroid fallback)
+        const { coords } = getBestCoords(user.district);
+        const [longitude, latitude] = coords;
+
+        // 2. Fetch nearby alerts (radius is 10km by default on backend)
+        const response = await fetch(
+          `${apiUrl}/api/alerts?lat=${latitude}&lng=${longitude}`,
+          {
+            headers: {
+              Accept: "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!response.ok) return;
+
+        const data = await response.json().catch(() => []);
+        const alertsList = Array.isArray(data) ? data : (Array.isArray(data.alerts) ? data.alerts : []);
+
+        // 3. Compare with last viewed timestamp
+        const lastViewedKey = getUserStorageKey("govi_nena_alerts_last_viewed");
+        const lastViewedStr = localStorage.getItem(lastViewedKey);
+        const lastViewed = lastViewedStr ? Number(lastViewedStr) : 0;
+
+        const unreadCount = alertsList.filter((alert) => {
+          const alertTime = new Date(alert.createdAt).getTime();
+          return alertTime > lastViewed;
+        }).length;
+
+        setNewAlertsCount(unreadCount);
+      } catch (err) {
+        console.error("Failed to check alert badges:", err);
+      }
+    };
+
+    fetchNearbyAlerts();
+  }, [user, pathname]);
 
   const toggleLanguage = () => {
     const nextLanguage = language === "si" ? "en" : "si";
@@ -193,19 +274,64 @@ export default function HomePage() {
   };
 
   const handleLogout = () => {
-  localStorage.removeItem("govi_nena_token");
-  localStorage.removeItem("govi_nena_user");
+    localStorage.removeItem("govi_nena_token");
+    localStorage.removeItem("govi_nena_user");
 
-  showSuccess(
-    language === "si"
-      ? "සාර්ථකව ඉවත් විය!"
-      : "Logged out successfully!"
-  );
+    // Clear GPS state so the next user who logs in on this device
+    // is always shown their own location permission prompt.
+    clearGPSState();
 
-  setTimeout(() => {
-    router.push("/login");
-  }, 1000);
-};
+    showSuccess(
+      language === "si"
+        ? "සාර්ථකව ඉවත් විය!"
+        : "Logged out successfully!"
+    );
+
+    setTimeout(() => {
+      router.push("/login");
+    }, 1000);
+  };
+
+  /** Called when the user taps "Allow Location" on the banner. */
+  const handleAllowLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationPermission('denied');
+      setGPSPermissionStatus('denied');
+      return;
+    }
+
+    setLocationPermission('requesting');
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const newCoords = [
+          position.coords.longitude,
+          position.coords.latitude,
+        ];
+        saveGPSCoords(newCoords);
+        setGPSPermissionStatus('granted');
+        setLocationPermission('granted');
+
+        // Auto-hide the success badge after 2 seconds.
+        setTimeout(() => setLocationPermission('hidden'), 2000);
+      },
+      () => {
+        setGPSPermissionStatus('denied');
+        setLocationPermission('denied');
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      }
+    );
+  };
+
+  /** Called when the user taps "Not Now" on the banner. */
+  const handleSkipLocation = () => {
+    setGPSPermissionStatus('skipped');
+    setLocationPermission('skipped');
+  };
 
   const handleCropSelection = (cropId) => {
     router.push(`/scan?crop=${cropId}`);
@@ -351,12 +477,18 @@ export default function HomePage() {
               onClick={() => router.push("/alerts")}
               aria-label={text.alerts}
               title={text.alerts}
-              className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-white/20 text-white transition-colors hover:bg-white/30 focus:outline-none focus:ring-2 focus:ring-white"
+              className="relative flex h-10 w-10 items-center justify-center rounded-[10px] bg-white/20 text-white transition-colors hover:bg-white/30 focus:outline-none focus:ring-2 focus:ring-white"
             >
               <Bell
                 size={20}
                 strokeWidth={2}
+                className={newAlertsCount > 0 ? "animate-bell-ring" : ""}
               />
+              {newAlertsCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[9px] font-bold text-white shadow-sm ring-1 ring-white animate-pulse">
+                  {newAlertsCount}
+                </span>
+              )}
             </button>
 
             <button
@@ -392,6 +524,75 @@ export default function HomePage() {
           {pageError}
         </div>
       )}
+
+      {/* ── Location permission banner ──────────────────────────────── */}
+      {locationPermission === 'prompt' && (
+        <section className="mx-6 mt-4 rounded-2xl border border-[#C8E6C9] bg-white p-5 shadow-[0_4px_16px_rgba(0,0,0,0.06)]">
+          <div className="flex items-start gap-4">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#E8F5E9]">
+              <MapPin size={22} strokeWidth={2.2} className="text-[#1B5E20]" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold text-[#1B5E20]">
+                {text.locationBannerTitle}
+              </p>
+              <p className="mt-0.5 text-xs leading-5 text-[#795548]">
+                {text.locationBannerDesc}
+              </p>
+            </div>
+          </div>
+          <div className="mt-4 flex gap-2">
+            <button
+              type="button"
+              onClick={handleAllowLocation}
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#1B5E20] py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#2E7D32] focus:outline-none focus:ring-2 focus:ring-[#4CAF50]"
+            >
+              <MapPin size={16} />
+              {text.locationBannerAllow}
+            </button>
+            <button
+              type="button"
+              onClick={handleSkipLocation}
+              className="rounded-xl border border-[#E0E0E0] px-4 py-2.5 text-sm font-medium text-[#795548] transition-colors hover:bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#4CAF50]"
+            >
+              {text.locationBannerSkip}
+            </button>
+          </div>
+        </section>
+      )}
+
+      {/* Requesting state — spinner replaces the card */}
+      {locationPermission === 'requesting' && (
+        <section className="mx-6 mt-4 flex items-center gap-3 rounded-2xl border border-[#C8E6C9] bg-white p-5 shadow-[0_4px_16px_rgba(0,0,0,0.06)]">
+          <LoaderCircle size={22} className="animate-spin text-[#1B5E20]" />
+          <p className="text-sm font-semibold text-[#1B5E20]">
+            {text.locationBannerRequesting}
+          </p>
+        </section>
+      )}
+
+      {/* Granted state — brief success tick */}
+      {locationPermission === 'granted' && (
+        <section className="mx-6 mt-4 flex items-center gap-3 rounded-2xl border border-[#A5D6A7] bg-[#E8F5E9] p-4 shadow-[0_4px_16px_rgba(0,0,0,0.04)]">
+          <CheckCircle2 size={22} className="shrink-0 text-[#2E7D32]" />
+          <p className="text-sm font-semibold text-[#1B5E20]">
+            {text.locationBannerGranted}
+          </p>
+        </section>
+      )}
+
+      {/* Denied by browser — show settings hint */}
+      {locationPermission === 'denied' && (
+        <section className="mx-6 mt-4 rounded-2xl border border-red-200 bg-red-50 p-4">
+          <p className="text-xs font-semibold text-red-700">
+            {text.locationBannerDeniedTitle}
+          </p>
+          <p className="mt-1 text-xs text-red-600">
+            {text.locationBannerDeniedDesc}
+          </p>
+        </section>
+      )}
+      {/* ──────────────────────────────────────────────────────────────── */}
 
       {/* Crop cards */}
       <section className="flex flex-1 flex-col gap-4 px-6 py-6">

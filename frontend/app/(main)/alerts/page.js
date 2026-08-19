@@ -1,61 +1,37 @@
 "use client";
 
-import {
-  useEffect,
-  useState,
-} from "react";
-
-import {
-  AlertTriangle,
-  ArrowLeft,
-  BellRing,
-  CalendarDays,
-  Leaf,
-  LoaderCircle,
-  MapPin,
-  Navigation,
-  ShieldCheck,
-} from "lucide-react";
-
-import {
-  GiChiliPepper,
-  GiTomato,
-  GiWheat,
-} from "react-icons/gi";
-
+import { useEffect,useState,} from "react";
+import {AlertTriangle,ArrowLeft,BellRing,CalendarDays,Leaf,LoaderCircle,MapPin,Navigation,ShieldCheck} from "lucide-react";
+import {GiChiliPepper,GiTomato,GiWheat,} from "react-icons/gi";
 import { useRouter } from "next/navigation";
+import {
+  getCachedGPSCoords,
+  getGPSPermissionStatus,
+  saveGPSCoords,
+  setGPSPermissionStatus,
+  getDistrictCoords,
+  getUserStorageKey,
+} from "@/lib/location";
 
 const alertsText = {
   si: {
     pageTitle: "ව්‍යාප්ති ඇඟවීම්",
     pageTitleSub: "Spread Warnings",
-
     changeLanguage: "භාෂාව වෙනස් කරන්න",
     goBack: "ආපසු යන්න",
-
     checkingArea: "පරීක්ෂා කරන ප්‍රදේශය",
     withinRadius: "කිලෝමීටර් 10 ඇතුළත",
     locationUnavailable: "ස්ථානය ලබාගත නොහැක",
     findingLocation: "ස්ථානය සොයමින්...",
-
     loading: "අනතුරු ඇඟවීම් සොයමින්...",
-
     radius: "අරය",
     kilometreUnit: "කි.මී.",
-
-    noAlertsTitle:
-      "ආසන්නයේ රෝග ව්‍යාප්තියක් නොමැත",
-
-    noAlertsDescription:
-      "ඔබේ ප්‍රදේශය අවට ඉහළ රෝග ව්‍යාප්ති අනතුරු ඇඟවීම් හඳුනාගෙන නොමැත. ඔබේ වගාවන් දැනට ආරක්ෂිතයි.",
-
-    fetchError:
-      "අනතුරු ඇඟවීම් ලබාගත නොහැකි විය.",
-
+    noAlertsTitle:"ආසන්නයේ රෝග ව්‍යාප්තියක් නොමැත",
+    noAlertsDescription: "ඔබේ ප්‍රදේශය අවට ඉහළ රෝග ව්‍යාප්ති අනතුරු ඇඟවීම් හඳුනාගෙන නොමැත. ඔබේ වගාවන් දැනට ආරක්ෂිතයි.",
+    fetchError: "අනතුරු ඇඟවීම් ලබාගත නොහැකි විය.",
     paddy: "වී",
     tomato: "තක්කාලි",
     chili: "මිරිස්",
-
     gpsLocation: "GPS ස්ථානය",
     districtLocation: "ලියාපදිංචි දිස්ත්‍රික්කය",
   },
@@ -63,64 +39,29 @@ const alertsText = {
   en: {
     pageTitle: "Spread Warnings",
     pageTitleSub: "ව්‍යාප්ති ඇඟවීම්",
-
     changeLanguage: "Change language",
     goBack: "Go back",
-
     checkingArea: "Checking area",
     withinRadius: "Within 10 kilometres",
     locationUnavailable: "Location unavailable",
     findingLocation: "Finding location...",
-
     loading: "Searching for outbreak warnings...",
-
     radius: "Radius",
     kilometreUnit: "km",
-
     noAlertsTitle: "No Outbreaks Nearby",
-
-    noAlertsDescription:
-      "No high-spread crop disease warnings have been detected near your area. Your crops are currently safe.",
-
-    fetchError:
-      "Unable to retrieve outbreak warnings.",
-
+    noAlertsDescription: "No high-spread crop disease warnings have been detected near your area. Your crops are currently safe.",
+    fetchError: "Unable to retrieve outbreak warnings.",
     paddy: "Paddy",
     tomato: "Tomato",
     chili: "Chilli",
-
     gpsLocation: "GPS location",
     districtLocation: "Registered district",
   },
 };
 
-const DISTRICT_CENTROIDS = {
-  Colombo: [79.8612, 6.9271],
-  Gampaha: [79.9925, 7.084],
-  Kalutara: [79.9733, 6.5854],
-  Kandy: [80.635, 7.2906],
-  Matale: [80.6234, 7.4675],
-  "Nuwara Eliya": [80.7891, 6.9497],
-  Galle: [80.217, 6.0535],
-  Matara: [80.5, 5.95],
-  Hambantota: [81.1185, 6.1246],
-  Jaffna: [80.0074, 9.6615],
-  Mannar: [79.9142, 8.9811],
-  Vavuniya: [80.4982, 8.7542],
-  Anuradhapura: [80.3947, 8.3122],
-  Polonnaruwa: [81.0006, 7.9397],
-  Kurunegala: [80.3647, 7.4864],
-  Puttalam: [79.8275, 8.033],
-  Badulla: [81.0556, 6.9934],
-  Monaragala: [81.35, 6.87],
-  Ratnapura: [80.4037, 6.6828],
-  Kegalle: [80.3424, 7.2513],
-  Trincomalee: [81.2335, 8.5873],
-  Batticaloa: [81.6924, 7.7102],
-  Ampara: [81.6747, 7.2912],
-  Kilinochchi: [80.3982, 9.3803],
-  Mullaitivu: [80.8142, 9.2671],
-};
+// DISTRICT_CENTROIDS is now imported from @/lib/location (shared with home & scan pages).
+
+
 
 const cropInformation = {
   paddy: {
@@ -216,42 +157,16 @@ function formatCropName(
 
 export default function AlertsPage() {
   const router = useRouter();
-
-  const [language, setLanguage] =
-    useState("si");
-
-  const [alerts, setAlerts] =
-    useState([]);
-
-  const [loading, setLoading] =
-    useState(true);
-
-  const [error, setError] =
-    useState(false);
-
-  const [userCoords, setUserCoords] =
-    useState(null);
-
-  const [
-    locationSource,
-    setLocationSource,
-  ] = useState("");
-
-  const [
-    locationName,
-    setLocationName,
-  ] = useState("");
-
-  const [
-    locationLoading,
-    setLocationLoading,
-  ] = useState(false);
-
+  const [language, setLanguage] =useState("si");
+  const [alerts, setAlerts] =useState([]);
+  const [loading, setLoading] =useState(true);
+  const [error, setError] =useState(false);
+  const [userCoords, setUserCoords] =useState(null);
+  const [ locationSource,setLocationSource,] = useState("");
+  const [locationName,setLocationName, ] = useState("");
+  const [locationLoading,setLocationLoading,] = useState(false);
   const text = alertsText[language];
-
-  const apiUrl =
-    process.env.NEXT_PUBLIC_API_URL ||
-    "http://localhost:5000";
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL ||"http://localhost:5000";
 
   /*
    * Restore the previously selected language.
@@ -410,6 +325,18 @@ export default function AlertsPage() {
         } else {
           setAlerts([]);
         }
+
+        try {
+          const lastViewedKey = getUserStorageKey("govi_nena_alerts_last_viewed");
+          const nowTime = Date.now();
+          localStorage.setItem(lastViewedKey, String(nowTime));
+          console.log("ALERTS PAGE VIEWED SET:", {
+            lastViewedKey,
+            nowTime
+          });
+        } catch (e) {
+          // Ignore
+        }
       } catch (error) {
         console.error(
           "Failed to fetch alerts:",
@@ -424,88 +351,94 @@ export default function AlertsPage() {
     };
 
     /*
-     * Use the registered district when GPS access is not
-     * available or has been denied.
+     * Fallback: use the centroid of the user's registered district.
+     * Called when GPS is denied or skipped.
      */
     const useDistrictLocation = () => {
-      const district =
-        userObject?.district || "Matale";
+      const district = userObject?.district || 'Kandy';
+      const [longitude, latitude] = getDistrictCoords(district);
 
-      const coordinates =
-        DISTRICT_CENTROIDS[district] ||
-        DISTRICT_CENTROIDS.Matale;
-
-      const longitude =
-        coordinates[0];
-
-      const latitude =
-        coordinates[1];
-
-      setUserCoords({
-        lat: latitude,
-        lng: longitude,
-      });
-
+      setUserCoords({ lat: latitude, lng: longitude });
       setLocationName(district);
-      setLocationSource("district");
+      setLocationSource('district');
       setLocationLoading(false);
-
-      fetchAlerts(
-        latitude,
-        longitude
-      );
+      fetchAlerts(latitude, longitude);
     };
 
-    if (!navigator.geolocation) {
+    /*
+     * ── Location strategy ────────────────────────────────────────────────
+     *
+     * 1. Use the GPS coordinates already cached by the home-page banner.
+     *    This is the common case after the user grants permission once.
+     *
+     * 2. If no cache exists but the browser permission is still 'prompt'
+     *    (user was never asked), attempt getCurrentPosition once. If it
+     *    succeeds we save the result so future visits skip this step.
+     *
+     * 3. If permission is 'denied' or 'skipped', use the registered
+     *    district centroid — no hidden [80.601, 7.901] fallback.
+     * ───────────────────────────────────────────────────────────────────
+     */
+    const cachedCoords = getCachedGPSCoords();
+
+    if (cachedCoords) {
+      // GPS cache is fresh — use it directly.
+      const [longitude, latitude] = cachedCoords;
+      setUserCoords({ lat: latitude, lng: longitude });
+      setLocationSource('gps');
+      fetchLocationName(latitude, longitude);
+      fetchAlerts(latitude, longitude);
+      return;
+    }
+
+    const permStatus = getGPSPermissionStatus();
+
+    if (permStatus === 'granted') {
+      // Permission was granted before but the cache expired — refresh silently.
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+            saveGPSCoords([longitude, latitude]);
+            setUserCoords({ lat: latitude, lng: longitude });
+            setLocationSource('gps');
+            fetchLocationName(latitude, longitude);
+            fetchAlerts(latitude, longitude);
+          },
+          () => useDistrictLocation(),
+          { enableHighAccuracy: false, timeout: 5000, maximumAge: 0 }
+        );
+        return;
+      }
       useDistrictLocation();
       return;
     }
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const latitude =
-          position.coords.latitude;
+    if (permStatus === 'prompt' && navigator.geolocation) {
+      // Browser hasn't decided yet — try once. If it succeeds, save the result.
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const latitude = position.coords.latitude;
+          const longitude = position.coords.longitude;
+          saveGPSCoords([longitude, latitude]);
+          setGPSPermissionStatus('granted');
+          setUserCoords({ lat: latitude, lng: longitude });
+          setLocationSource('gps');
+          fetchLocationName(latitude, longitude);
+          fetchAlerts(latitude, longitude);
+        },
+        () => {
+          // Browser silently denied — fall back to district.
+          useDistrictLocation();
+        },
+        { enableHighAccuracy: false, timeout: 5000, maximumAge: 300000 }
+      );
+      return;
+    }
 
-        const longitude =
-          position.coords.longitude;
-
-        setUserCoords({
-          lat: latitude,
-          lng: longitude,
-        });
-
-        setLocationSource("gps");
-
-        /*
-         * These requests can happen at the same time.
-         * Failure of reverse geocoding does not stop alerts.
-         */
-        fetchLocationName(
-          latitude,
-          longitude
-        );
-
-        fetchAlerts(
-          latitude,
-          longitude
-        );
-      },
-
-      (error) => {
-        console.warn(
-          "GPS location unavailable. Using registered district:",
-          error.message
-        );
-
-        useDistrictLocation();
-      },
-
-      {
-        enableHighAccuracy: false,
-        timeout: 5000,
-        maximumAge: 300000,
-      }
-    );
+    // 'denied' or 'skipped' — use registered district.
+    useDistrictLocation();
   }, [router, apiUrl]);
 
   const toggleLanguage = () => {

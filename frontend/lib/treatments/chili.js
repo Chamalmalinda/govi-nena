@@ -99,5 +99,22 @@ export const chiliTreatments = {
       organic: 'Keep field clean. Remove infected plant parts. Organic fungicides.',
       prevention: 'Burn plant debris after harvest. Maintain good ventilation. Reduce plant density.'
     }
+  },
+
+  'not_chili': {
+    si: {
+      name: 'මිරිස් පත්‍රයක් නොවේ',
+      symptoms: 'ස්කෑන් කරන ලද ඡායාරූපය මිරිස් පත්‍රයකට අදාළ නොවේ.',
+      chemical: 'ප්‍රතිකාර අවශ්‍ය නොවේ.',
+      organic: 'කරුණාකර නිවැරදි බෝග පත්‍රයේ ඡායාරූපයක් ලබාදී නැවත උත්සාහ කරන්න.',
+      prevention: 'මිරිස් පත්‍රයක් පමණක් රාමුව ඇතුළත තබා ස්කෑන් කිරීමට වගබලා ගන්න.'
+    },
+    en: {
+      name: 'Not a Chili Leaf',
+      symptoms: 'The scanned image does not appear to be a chili leaf.',
+      chemical: 'No treatment required.',
+      organic: 'Please scan a valid chili leaf and try again.',
+      prevention: 'Ensure only chili leaves are placed in the camera frame.'
+    }
   }
 };

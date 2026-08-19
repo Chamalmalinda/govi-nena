@@ -158,5 +158,21 @@ export const paddyTreatments = {
       organic: "Regular monitoring recommended",
       prevention: "Continue healthy farming practices"
     }
+  },
+  not_paddy: {
+    si: {
+      name: "වී පත්‍රයක් නොවේ",
+      symptoms: "ස්කෑන් කරන ලද ඡායාරූපය වී පත්‍රයකට අදාළ නොවේ.",
+      chemical: "ප්‍රතිකාර අවශ්‍ය නොවේ.",
+      organic: "කරුණාකර නිවැරදි බෝග පත්‍රයේ ඡායාරූපයක් ලබාදී නැවත උත්සාහ කරන්න.",
+      prevention: "වී පත්‍රයක් පමණක් රාමුව ඇතුළත තබා ස්කෑන් කිරීමට වගබලා ගන්න."
+    },
+    en: {
+      name: "Not a Paddy Leaf",
+      symptoms: "The scanned image does not appear to be a paddy leaf.",
+      chemical: "No treatment required.",
+      organic: "Please scan a valid paddy leaf and try again.",
+      prevention: "Ensure only paddy leaves are placed in the camera frame."
+    }
   }
 };

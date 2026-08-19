@@ -1,136 +1,71 @@
 "use client";
 
-import {
-  Suspense,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-
-import {
-  AlertTriangle,
-  
-  ArrowLeft,
-  CalendarDays,
-  
-  LoaderCircle,
-  MapPin,
-  MapPinned,
-  Navigation,
-  Radius,
-  RefreshCw,
-  
-} from "lucide-react";
-
-import {
-  GiChiliPepper,
-  GiTomato,
-  GiWheat,
-} from "react-icons/gi";
-
-import {
-  useRouter,
-  useSearchParams,
-} from "next/navigation";
+import { Suspense, useEffect, useMemo, useState,} from "react";
+import { AlertTriangle,  ArrowLeft, CalendarDays,  LoaderCircle, MapPin, MapPinned,Navigation,Radius,RefreshCw,} from "lucide-react";
+import { GiChiliPepper, GiTomato, GiWheat,} from "react-icons/gi";
+import {useRouter,useSearchParams,} from "next/navigation";
+import { getCachedGPSCoords, getDistrictCoords, DISTRICT_CENTROIDS, getUserStorageKey } from "@/lib/location";
 
 const heatmapText = {
   si: {
     pageTitle: "ව්‍යාප්ති සිතියම",
     pageTitleSub: "Outbreak Heatmap",
-
     changeLanguage: "භාෂාව වෙනස් කරන්න",
     goBack: "ආපසු යන්න",
-
     nearbyOutbreaks: "ආසන්න රෝග වාර්තා",
     mapTitle: "රෝග ව්‍යාප්ති ස්ථාන",
     recentReports: "මෑතකාලීන වාර්තා",
-
     selectedDisease: "තෝරාගත් රෝගය",
     selectedCrop: "තෝරාගත් බෝගය",
     searchRadius: "සෙවීමේ අරය",
     scanLocation: "ස්කෑන් කළ ස්ථානය",
-
     withinRadius: "කිලෝමීටර් 5 ඇතුළත",
     radiusUnit: "කි.මී.",
-
     paddy: "වී",
     tomato: "තක්කාලි",
     chili: "මිරිස්",
-
     confidence: "ගැළපීම",
     reports: "වාර්තා",
     report: "වාර්තාව",
-
     loading: "ආසන්න වාර්තා සොයමින්...",
     locationLoading: "ස්ථානය සොයමින්...",
-
-    noOutbreaks:
-      "මෙම රෝගයට අදාළ වාර්තා කිලෝමීටර් 5 ඇතුළත හමු නොවීය.",
-
-    noLocation:
-      "ස්කෑන් කළ ස්ථානය සොයාගත නොහැක.",
-
-    noDisease:
-      "ස්කෑන් කළ රෝග තොරතුරු සොයාගත නොහැක.",
-
-    requestFailed:
-      "රෝග වාර්තා ලබාගත නොහැකි විය.",
-
+    noOutbreaks:"මෙම රෝගයට අදාළ වාර්තා කිලෝමීටර් 5 ඇතුළත හමු නොවීය.",
+    noLocation: "ස්කෑන් කළ ස්ථානය සොයාගත නොහැක.",
+    noDisease:"ස්කෑන් කළ රෝග තොරතුරු සොයාගත නොහැක.",
+    requestFailed: "රෝග වාර්තා ලබාගත නොහැකි විය.",
     retry: "නැවත උත්සාහ කරන්න",
-
-    localOnly:
-      "මෙහි පෙන්වන්නේ තෝරාගත් රෝගයට අදාළ කිලෝමීටර් 5 ඇතුළත වාර්තා පමණි.",
-
+    localOnly: "මෙහි පෙන්වන්නේ තෝරාගත් රෝගයට අදාළ කිලෝමීටර් 5 ඇතුළත වාර්තා පමණි.",
     currentScan: "වත්මන් ස්කෑන් ස්ථානය",
   },
 
   en: {
     pageTitle: "Outbreak Heatmap",
     pageTitleSub: "ව්‍යාප්ති සිතියම",
-
     changeLanguage: "Change language",
     goBack: "Go back",
-
     nearbyOutbreaks: "Nearby Outbreaks",
     mapTitle: "Outbreak Locations",
     recentReports: "Recent Reports",
-
     selectedDisease: "Selected Disease",
     selectedCrop: "Selected Crop",
     searchRadius: "Search Radius",
     scanLocation: "Scan Location",
-
     withinRadius: "Within 5 kilometres",
     radiusUnit: "km",
-
     paddy: "Paddy",
     tomato: "Tomato",
     chili: "Chilli",
-
     confidence: "match",
     reports: "reports",
     report: "report",
-
     loading: "Searching nearby reports...",
     locationLoading: "Finding location...",
-
-    noOutbreaks:
-      "No reports of this disease were found within 5 kilometres.",
-
-    noLocation:
-      "The scanned location could not be found.",
-
-    noDisease:
-      "The scanned disease information could not be found.",
-
-    requestFailed:
-      "Unable to retrieve outbreak reports.",
-
+    noOutbreaks: "No reports of this disease were found within 5 kilometres.",
+    noLocation:  "The scanned location could not be found.",
+    noDisease: "The scanned disease information could not be found.",
+    requestFailed: "Unable to retrieve outbreak reports.",
     retry: "Try Again",
-
-    localOnly:
-      "Only reports of the selected disease within 5 kilometres are shown.",
-
+    localOnly:  "Only reports of the selected disease within 5 kilometres are shown.",
     currentScan: "Current scan location",
   },
 };
@@ -222,37 +157,15 @@ function formatCoordinate(value) {
 function HeatmapContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-
-  const [language, setLanguage] =
-    useState("si");
-
-  const [outbreaks, setOutbreaks] =
-    useState([]);
-
-  const [loading, setLoading] =
-    useState(true);
-
-  const [error, setError] =
-    useState("");
-
-  const [queryDetails, setQueryDetails] =
-    useState(null);
-
-  const [
-    scanLocationName,
-    setScanLocationName,
-  ] = useState("");
-
-  const [
-    locationLoading,
-    setLocationLoading,
-  ] = useState(false);
-
+  const [language, setLanguage] = useState("si");
+  const [outbreaks, setOutbreaks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [queryDetails, setQueryDetails] = useState(null);
+  const [ scanLocationName,setScanLocationName,] = useState("");
+  const [ locationLoading, setLocationLoading,] = useState(false);
   const text = heatmapText[language];
-
-  const apiUrl =
-    process.env.NEXT_PUBLIC_API_URL ||
-    "http://localhost:5000";
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
   useEffect(() => {
     try {
@@ -295,26 +208,18 @@ function HeatmapContent() {
   };
 
   const getHeatmapParameters = () => {
-    let disease =
-      searchParams.get("disease");
+    let disease =searchParams.get("disease");
+    let crop =searchParams.get("crop");
+    let latitude = searchParams.get("lat");
+    let longitude =searchParams.get("lng");
 
-    let crop =
-      searchParams.get("crop");
-
-    let latitude =
-      searchParams.get("lat");
-
-    let longitude =
-      searchParams.get("lng");
-
-    const radius =
-      searchParams.get("radius") || "5";
+    const radius = searchParams.get("radius") || "5";
 
     try {
       if (!disease) {
         const storedResult =
           localStorage.getItem(
-            "govi_nena_last_result"
+            getUserStorageKey("govi_nena_last_result")
           );
 
         if (storedResult) {
@@ -329,39 +234,63 @@ function HeatmapContent() {
       if (!crop) {
         crop =
           localStorage.getItem(
-            "govi_nena_last_scan_crop"
+            getUserStorageKey("govi_nena_last_scan_crop")
           ) || "";
       }
 
       if (!latitude || !longitude) {
-        const storedCoordinates =
-          localStorage.getItem(
-            "govi_nena_last_scan_coords"
-          );
-
+        // 1. Try the last completed scan coordinates (user-specific key)
+        const storedCoordinates = localStorage.getItem(
+          getUserStorageKey("govi_nena_last_scan_coords")
+        );
         if (storedCoordinates) {
-          const parsedCoordinates =
-            JSON.parse(storedCoordinates);
-
-          if (
-            Array.isArray(parsedCoordinates) &&
-            parsedCoordinates.length === 2
-          ) {
-            longitude = String(
-              parsedCoordinates[0]
-            );
-
-            latitude = String(
-              parsedCoordinates[1]
-            );
+          const parsedCoordinates = JSON.parse(storedCoordinates);
+          if (Array.isArray(parsedCoordinates) && parsedCoordinates.length === 2) {
+            longitude = String(parsedCoordinates[0]);
+            latitude = String(parsedCoordinates[1]);
           }
         }
+
+        // 2. Try the home-page/shared GPS cache if last scan coords are missing
+        if (!latitude || !longitude) {
+          const cached = getCachedGPSCoords();
+          if (cached) {
+            longitude = String(cached[0]);
+            latitude = String(cached[1]);
+          }
+        }
+
+        // 3. Fall back to user's registered district centroid
+        if (!latitude || !longitude) {
+          try {
+            const storedUser = JSON.parse(localStorage.getItem("govi_nena_user") || "{}");
+            const district = storedUser.district || "Matale";
+            const districtCoords = getDistrictCoords(district);
+            longitude = String(districtCoords[0]);
+            latitude = String(districtCoords[1]);
+          } catch {
+            const districtCoords = getDistrictCoords("Matale");
+            longitude = String(districtCoords[0]);
+            latitude = String(districtCoords[1]);
+          }
+        }
+      }
+
+      // 4. Default fallbacks if user has never scanned anything before
+      if (!crop) {
+        crop = "paddy";
+      }
+      if (!disease) {
+        disease = "blast";
       }
     } catch (error) {
       console.error(
         "Could not restore the latest scan:",
         error
       );
+      // Ensure defaults even on errors
+      if (!crop) crop = "paddy";
+      if (!disease) disease = "blast";
     }
 
     return {
@@ -379,6 +308,20 @@ function HeatmapContent() {
   ) => {
     if (!latitude || !longitude) {
       setScanLocationName("");
+      return;
+    }
+
+    // Check if coordinates match a district centroid exactly
+    const numLat = Number(latitude);
+    const numLng = Number(longitude);
+    const matchedDistrict = Object.keys(DISTRICT_CENTROIDS).find((key) => {
+      const coords = DISTRICT_CENTROIDS[key];
+      return Math.abs(coords[0] - numLng) < 0.0001 && Math.abs(coords[1] - numLat) < 0.0001;
+    });
+
+    if (matchedDistrict) {
+      // Direct match! Display the district name instead of calling geocoder API
+      setScanLocationName(matchedDistrict);
       return;
     }
 
@@ -535,50 +478,21 @@ function HeatmapContent() {
     fetchOutbreaks();
   }, [searchParams, router]);
 
-  const currentCrop =
-    queryDetails?.crop || "";
-
-  const selectedCropInfo =
-    cropInformation[currentCrop] ||
-    cropInformation.paddy;
-
-  const CropIcon =
-    selectedCropInfo.Icon;
-
-  const diseaseDisplayName =
-    formatDiseaseName(
-      queryDetails?.disease
-    );
+  const currentCrop =queryDetails?.crop || "";
+  const selectedCropInfo = cropInformation[currentCrop] || cropInformation.paddy;
+  const CropIcon = selectedCropInfo.Icon;
+  const diseaseDisplayName = formatDiseaseName(  queryDetails?.disease);
 
   const plottedOutbreaks = useMemo(
     () =>
       outbreaks.map((outbreak) => {
-        const coordinates =
-          outbreak.location?.coordinates ||
-          [];
-
-        const longitude =
-          Number(coordinates[0]);
-
-        const latitude =
-          Number(coordinates[1]);
-
-        const centreLongitude =
-          Number(
-            queryDetails?.longitude
-          );
-
-        const centreLatitude =
-          Number(
-            queryDetails?.latitude
-          );
-
-        const longitudeDifference =
-          longitude - centreLongitude;
-
-        const latitudeDifference =
-          latitude - centreLatitude;
-
+        const coordinates =outbreak.location?.coordinates || [];
+        const longitude = Number(coordinates[0]);
+        const latitude = Number(coordinates[1]);
+        const centreLongitude = Number( queryDetails?.longitude );
+        const centreLatitude =Number( queryDetails?.latitude);
+        const longitudeDifference = longitude - centreLongitude;
+        const latitudeDifference = latitude - centreLatitude;
         const xPercent = Math.max(
           8,
           Math.min(
@@ -610,13 +524,19 @@ function HeatmapContent() {
     [outbreaks, queryDetails]
   );
 
+  const isCurrentGPS = useMemo(() => {
+    const cached = getCachedGPSCoords();
+    if (!cached || !queryDetails?.latitude || !queryDetails?.longitude) return false;
+    const numLat = Number(queryDetails.latitude);
+    const numLng = Number(queryDetails.longitude);
+    return Math.abs(cached[0] - numLng) < 0.0005 && Math.abs(cached[1] - numLat) < 0.0005;
+  }, [queryDetails]);
+
   const displayedLocation =
     scanLocationName ||
-    `${formatCoordinate(
-      queryDetails?.latitude
-    )}, ${formatCoordinate(
-      queryDetails?.longitude
-    )}`;
+    (isCurrentGPS
+      ? (language === "si" ? "වත්මන් ස්ථානය" : "Current Location")
+      : `${formatCoordinate(queryDetails?.latitude)}, ${formatCoordinate(queryDetails?.longitude)}`);
 
   return (
     <main className="min-h-screen bg-[#F9FBF7] font-sans">
