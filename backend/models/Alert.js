@@ -47,7 +47,7 @@ const AlertSchema = new mongoose.Schema({
 // Geospatial index for proximity alerts
 AlertSchema.index({ location: '2dsphere' });
 
-// TTL index to automatically expire alert after 7 days (604800 seconds)
+
 AlertSchema.index({ createdAt: 1 }, { expireAfterSeconds: 604800 });
 
 module.exports = mongoose.model('Alert', AlertSchema);

@@ -1,12 +1,11 @@
 
-// ── localStorage keys ──────────────────────────────────────────────────────
+//localStorage keys
 export const GPS_COORDS_KEY = 'govi_nena_gps_coords';
 export const GPS_PERMISSION_KEY = 'govi_nena_location_permission';
 
-/** How long a cached GPS fix remains valid before we try to refresh it. */
-const GPS_CACHE_MAX_AGE_MS = 10 * 60 * 1000; // 10 minutes
+const GPS_CACHE_MAX_AGE_MS = 10 * 60 * 1000; 
 
-// ── District centroids [longitude, latitude] ───────────────────────────────
+
 export const DISTRICT_CENTROIDS = {
   Colombo: [79.8612, 6.9271],
   Gampaha: [79.9925, 7.084],
@@ -35,14 +34,7 @@ export const DISTRICT_CENTROIDS = {
   Mullaitivu: [80.8142, 9.2671],
 };
 
-// ── GPS cache helpers ──────────────────────────────────────────────────────
 
-/**
- * Returns cached GPS coordinates [longitude, latitude] if they are still
- * fresh (within GPS_CACHE_MAX_AGE_MS), otherwise returns null.
- *
- * @returns {[number, number] | null}
- */
 export function getCachedGPSCoords() {
   try {
     const raw = localStorage.getItem(GPS_COORDS_KEY);
@@ -63,12 +55,8 @@ export function getCachedGPSCoords() {
     return null;
   }
 }
+//Saves GPS coordinates to localStorage with the current timestamp.
 
-/**
- * Saves GPS coordinates to localStorage with the current timestamp.
- *
- * @param {[number, number]} coords [longitude, latitude]
- */
 export function saveGPSCoords(coords) {
   try {
     localStorage.setItem(
@@ -76,7 +64,7 @@ export function saveGPSCoords(coords) {
       JSON.stringify({ coords, timestamp: Date.now() })
     );
   } catch {
-    // Silently ignore storage errors.
+   
   }
 }
 
@@ -85,17 +73,11 @@ export function clearGPSState() {
     localStorage.removeItem(GPS_COORDS_KEY);
     localStorage.removeItem(GPS_PERMISSION_KEY);
   } catch {
-    // Ignore.
+
   }
 }
 
-// ── Permission status helpers ──────────────────────────────────────────────
 
-/**
- * Returns the stored GPS permission status.
- *
- * @returns {'granted' | 'denied' | 'skipped' | 'prompt'}
- */
 export function getGPSPermissionStatus() {
   try {
     const status = localStorage.getItem(GPS_PERMISSION_KEY);
@@ -112,16 +94,11 @@ export function getGPSPermissionStatus() {
   return 'prompt';
 }
 
-/**
- * Saves the GPS permission status to localStorage.
- *
- * @param {'granted' | 'denied' | 'skipped'} status
- */
 export function setGPSPermissionStatus(status) {
   try {
     localStorage.setItem(GPS_PERMISSION_KEY, status);
   } catch {
-    // Ignore.
+
   }
 }
 
@@ -153,23 +130,16 @@ const SINHALA_DISTRICT_MAP = {
   "මුලතිව්": "Mullaitivu"
 };
 
-/**
- * Returns the centroid [longitude, latitude] for the given Sri Lankan
- * district name (supports both English and Sinhala strings).
- * Falls back to Kandy if the name is not recognised.
- *
- * @param {string} district
- * @returns {[number, number]}
- */
+
 export function getDistrictCoords(district) {
   if (!district) return DISTRICT_CENTROIDS['Kandy'];
   
   const trimmed = district.trim();
   
-  // 1. Try to map Sinhala to English key
+
   const englishName = SINHALA_DISTRICT_MAP[trimmed] || trimmed;
   
-  // 2. Lookup coordinates using matched English key (case-insensitive fallback)
+
   const normalizedKey = Object.keys(DISTRICT_CENTROIDS).find(
     (key) => key.toLowerCase() === englishName.toLowerCase()
   );
@@ -177,32 +147,14 @@ export function getDistrictCoords(district) {
   return normalizedKey ? DISTRICT_CENTROIDS[normalizedKey] : DISTRICT_CENTROIDS['Kandy'];
 }
 
-/**
- * Returns the best available coordinates together with their source label.
- *
- * Priority:
- *   1. Fresh GPS cache  (source = 'gps')
- *   2. Registered district centroid  (source = 'district')
- *
- * @param {string} userDistrict  The district stored on the user object.
- * @returns {{ coords: [number, number], source: 'gps' | 'district' }}
- */
 export function getBestCoords(userDistrict) {
   const gps = getCachedGPSCoords();
   if (gps) return { coords: gps, source: 'gps' };
   return { coords: getDistrictCoords(userDistrict), source: 'district' };
 }
 
-// ── Per-user tracking ─────────────────────────────────────────────────────
 
-/** localStorage key that stores the ID of the last successfully logged-in user. */
 const LAST_USER_KEY = 'govi_nena_last_user_id';
-
-/**
- * Returns the user ID that was active during the last session, or null.
- *
- * @returns {string | null}
- */
 export function getLastUserId() {
   try {
     return localStorage.getItem(LAST_USER_KEY);
@@ -211,11 +163,7 @@ export function getLastUserId() {
   }
 }
 
-/**
- * Persists the current user's ID so the next login can detect a user switch.
- *
- * @param {string} userId
- */
+
 export function setLastUserId(userId) {
   try {
     localStorage.setItem(LAST_USER_KEY, String(userId));
@@ -224,13 +172,7 @@ export function setLastUserId(userId) {
   }
 }
 
-/**
- * Returns a user-specific storage key by appending the current user's ID.
- * Falls back to the baseKey if no user is logged in.
- *
- * @param {string} baseKey
- * @returns {string}
- */
+
 export function getUserStorageKey(baseKey) {
   try {
     const storedUser = localStorage.getItem('govi_nena_user');
@@ -240,7 +182,7 @@ export function getUserStorageKey(baseKey) {
       if (userId) return `${baseKey}_${userId}`;
     }
   } catch {
-    // Ignore.
+
   }
   return baseKey;
 }

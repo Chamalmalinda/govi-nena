@@ -59,10 +59,6 @@ const alertsText = {
   },
 };
 
-// DISTRICT_CENTROIDS is now imported from @/lib/location (shared with home & scan pages).
-
-
-
 const cropInformation = {
   paddy: {
     Icon: GiWheat,
@@ -168,9 +164,7 @@ export default function AlertsPage() {
   const text = alertsText[language];
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ||"http://localhost:5000";
 
-  /*
-   * Restore the previously selected language.
-   */
+
   useEffect(() => {
     try {
       const savedLanguage =
@@ -192,9 +186,9 @@ export default function AlertsPage() {
     }
   }, []);
 
-  /*
-   * Get the user's location and retrieve nearby alerts.
-   */
+  
+   //Get the user's location and retrieve nearby alerts.
+
   useEffect(() => {
     const token =
       localStorage.getItem(
@@ -222,14 +216,9 @@ export default function AlertsPage() {
         error
       );
     }
+    
+   // Reverse-geocode GPS coordinates using the existing backend weather endpoint.
 
-    /*
-     * Reverse-geocode GPS coordinates using the existing
-     * backend weather endpoint.
-     *
-     * If this request fails, the coordinate values remain
-     * available as a fallback.
-     */
     const fetchLocationName = async (
       latitude,
       longitude
@@ -335,7 +324,7 @@ export default function AlertsPage() {
             nowTime
           });
         } catch (e) {
-          // Ignore
+
         }
       } catch (error) {
         console.error(
@@ -350,10 +339,7 @@ export default function AlertsPage() {
       }
     };
 
-    /*
-     * Fallback: use the centroid of the user's registered district.
-     * Called when GPS is denied or skipped.
-     */
+   
     const useDistrictLocation = () => {
       const district = userObject?.district || 'Kandy';
       const [longitude, latitude] = getDistrictCoords(district);
@@ -365,24 +351,11 @@ export default function AlertsPage() {
       fetchAlerts(latitude, longitude);
     };
 
-    /*
-     * ── Location strategy ────────────────────────────────────────────────
-     *
-     * 1. Use the GPS coordinates already cached by the home-page banner.
-     *    This is the common case after the user grants permission once.
-     *
-     * 2. If no cache exists but the browser permission is still 'prompt'
-     *    (user was never asked), attempt getCurrentPosition once. If it
-     *    succeeds we save the result so future visits skip this step.
-     *
-     * 3. If permission is 'denied' or 'skipped', use the registered
-     *    district centroid — no hidden [80.601, 7.901] fallback.
-     * ───────────────────────────────────────────────────────────────────
-     */
+
     const cachedCoords = getCachedGPSCoords();
 
     if (cachedCoords) {
-      // GPS cache is fresh — use it directly.
+   
       const [longitude, latitude] = cachedCoords;
       setUserCoords({ lat: latitude, lng: longitude });
       setLocationSource('gps');
@@ -394,7 +367,7 @@ export default function AlertsPage() {
     const permStatus = getGPSPermissionStatus();
 
     if (permStatus === 'granted') {
-      // Permission was granted before but the cache expired — refresh silently.
+
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (position) => {
@@ -416,7 +389,7 @@ export default function AlertsPage() {
     }
 
     if (permStatus === 'prompt' && navigator.geolocation) {
-      // Browser hasn't decided yet — try once. If it succeeds, save the result.
+   
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const latitude = position.coords.latitude;
@@ -429,7 +402,7 @@ export default function AlertsPage() {
           fetchAlerts(latitude, longitude);
         },
         () => {
-          // Browser silently denied — fall back to district.
+          
           useDistrictLocation();
         },
         { enableHighAccuracy: false, timeout: 5000, maximumAge: 300000 }
@@ -437,7 +410,7 @@ export default function AlertsPage() {
       return;
     }
 
-    // 'denied' or 'skipped' — use registered district.
+
     useDistrictLocation();
   }, [router, apiUrl]);
 

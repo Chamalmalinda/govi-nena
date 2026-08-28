@@ -1,8 +1,6 @@
 const Alert = require('../models/Alert');
 
-// @route   GET /api/alerts
-// @desc    Fetch alerts near the specified location
-// @access  Public
+
 exports.getAlerts = async (req, res) => {
   const { lat, lng, radius } = req.query;
 
@@ -11,7 +9,7 @@ exports.getAlerts = async (req, res) => {
   }
 
   try {
-    const searchRadius = radius ? parseInt(radius) * 1000 : 10000; // default 10km in meters
+    const searchRadius = radius ? parseInt(radius) * 1000 : 10000; 
 
     const alerts = await Alert.find({
       location: {
@@ -32,9 +30,7 @@ exports.getAlerts = async (req, res) => {
   }
 };
 
-// @route   POST /api/alerts
-// @desc    Manually create an alert (for Admins / Officers)
-// @access  Public (In production, would be private with admin middleware checks)
+
 exports.createAlert = async (req, res) => {
   const { title, message, disease, crop, coordinates, radiusKm } = req.body;
 

@@ -2,14 +2,12 @@ const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-// @route   POST /api/auth/register
-// @desc    Register user
-// @access  Public
+
 exports.register = async (req, res) => {
   const { name, email, phone, district, password } = req.body;
 
   try {
-    // Check if user exists by phone or email
+
     let userByPhone = await User.findOne({ phone });
     if (userByPhone) {
       return res.status(400).json({ message: 'User already exists with this phone number' });
@@ -20,7 +18,7 @@ exports.register = async (req, res) => {
       return res.status(400).json({ message: 'User already exists with this email' });
     }
 
-    // Create instance
+
     const user = new User({
       name,
       email,
@@ -65,20 +63,18 @@ exports.register = async (req, res) => {
   }
 };
 
-// @route   POST /api/auth/login
-// @desc    Authenticate user & get token
-// @access  Public
+
 exports.login = async (req, res) => {
   const { phone, password } = req.body;
 
   try {
-    // Check if user exists
+   
     const user = await User.findOne({ phone });
     if (!user) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    // Compare passwords
+   
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ message: 'Invalid credentials' });
@@ -114,9 +110,7 @@ exports.login = async (req, res) => {
   }
 };
 
-// @route   GET /api/auth/me
-// @desc    Get current user profile
-// @access  Private
+
 exports.getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('-password');

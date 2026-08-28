@@ -1,93 +1,45 @@
 "use client";
 
-import {
-  Suspense,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
-
-import {
-  AlertTriangle,
-  ArrowLeft,
-  Camera,
-  CheckCircle2,
-  ChevronRight,
-  CircleHelp,
-  ImagePlus,
-  LoaderCircle,
-  MapPinned,
-  RefreshCw,
-  Speaker,
-  X,
-} from "lucide-react";
-
-import {
-  GiChiliPepper,
-  GiTomato,
-  GiWheat,
-} from "react-icons/gi";
-
-import {
-  useRouter,
-  useSearchParams,
-} from "next/navigation";
-
+import { Suspense, useEffect,useRef,useState,} from "react";
+import { AlertTriangle, ArrowLeft, Camera, CheckCircle2, ChevronRight, CircleHelp, ImagePlus, LoaderCircle, MapPinned, RefreshCw, Speaker, X,} from "lucide-react";
+import {GiChiliPepper,GiTomato,GiWheat} from "react-icons/gi";
+import {useRouter, useSearchParams,} from "next/navigation";
 import { useModel } from "@/hooks/useModel";
 import { getTreatmentOffline } from "@/lib/offlineStorage";
-import {
-  getCachedGPSCoords,
-  getDistrictCoords,
-  getUserStorageKey,
-} from "@/lib/location";
+import { getCachedGPSCoords, getDistrictCoords, getUserStorageKey,} from "@/lib/location";
 
 const scanText = {
   si: {
     changeLanguage: "භාෂාව වෙනස් කරන්න",
-
     onlyScanLeaves: "පත්‍ර පමණක් ස්කෑන් කරන්න",
     placeLeaf: "රෝගී කොළය රාමුව ඇතුළත තබන්න",
-    goodLight:
-      "හොඳ ආලෝකයක් ඇති ස්ථානයක ඡායාරූපය ගන්න",
-
+    goodLight: "හොඳ ආලෝකයක් ඇති ස්ථානයක ඡායාරූපය ගන්න",
     loadingModel: "මොඩලය පූරණය වෙමින්...",
-    loadingModelSub:
-      "මේ සඳහා මිනිත්තුවක් පමණ ගත විය හැක",
-
+    loadingModelSub:  "මේ සඳහා මිනිත්තුවක් පමණ ගත විය හැක",
     tryAgain: "නැවත උත්සාහ කරන්න",
     uploadImage: "ඡායාරූපයක් උඩුගත කරන්න",
     captureImage: "ඡායාරූපය ගන්න",
     analysing: "විශ්ලේෂණය වෙමින්...",
-
     analysisResults: "විශ්ලේෂණ ප්‍රතිඵල",
     analysisResultsSub: "Analysis Results",
-
     uncertainTitle: "අවිනිශ්චිත ස්කෑන් ප්‍රතිඵලයකි",
     uncertainDescription:
       "මෙම ප්‍රතිඵලය අවිනිශ්චිතය. රසායනික ප්‍රතිකාර භාවිතයට පෙර, වඩා හොඳ ආලෝකයකින් පත්‍රය ආසන්නයෙන් නැවත ස්කෑන් කරන්න.",
-
     capturedImage: "ග්‍රහණය කළ රූපය",
     match: "ගැළපීම",
-
     confidence: "විශ්වාසය",
     description: "විස්තරය",
-
     treatmentSteps: "ප්‍රතිකාර පියවර",
     chemicalTreatment: "රසායනික ප්‍රතිකාර",
     organicTreatment: "කාබනික ප්‍රතිකාර",
     prevention: "වැළැක්වීම",
-
     uncertainChemical:
       "අවිනිශ්චිත ස්කෑන් ප්‍රතිඵල සඳහා රසායනික ප්‍රතිකාර නිර්දේශ නොකෙරේ. කරුණාකර නැවත ස්කෑන් කරන්න.",
-
     viewDetails: "සම්පූර්ණ තොරතුරු බලන්න",
     viewDetailsSub: "View Full Details",
-
     outbreakMap: "ව්‍යාප්ති සිතියම බලන්න",
     outbreakMapSub: "කිලෝමීටර් 5 ඇතුළත වාර්තා බලන්න",
-
     scanAgain: "නැවත ස්කෑන් කරන්න",
-
     unknownName: "හඳුනාගත නොහැකි රෝගයක්",
     unknownSymptoms:
       "පැහැදිලි රෝග ලක්ෂණ හඳුනාගත නොහැක.",
@@ -95,76 +47,57 @@ const scanText = {
       "කෘෂිකර්ම නිලධාරියෙකුගෙන් උපදෙස් ලබාගන්න.",
     unknownTip:
       "හොඳ ආලෝකයක් ඇති ස්ථානයක පත්‍රයක් නැවත ස්කෑන් කරන්න.",
-
     cameraError:
       "කැමරාවට ප්‍රවේශ විය නොහැක. ඡායාරූපයක් උඩුගත කරන්න.",
-
     locationError:
       "ස්කෑන් කළ ස්ථානය සොයාගත නොහැක. කරුණාකර නැවත ස්කෑන් කරන්න.",
-
     speechDisease: "හඳුනාගත් රෝගය",
     speechSymptoms: "රෝග ලක්ෂණ",
     speechChemical: "රසායනික ප්‍රතිකාර",
     speechOrganic: "කාබනික ප්‍රතිකාර",
     speechPrevention: "වැළැක්වීම",
   },
-
   en: {
     changeLanguage: "Change language",
 
     onlyScanLeaves: "Only scan plant leaves",
     placeLeaf: "Place the diseased leaf inside the frame",
     goodLight: "Take the photo in good lighting",
-
     loadingModel: "Loading model...",
     loadingModelSub: "This may take a minute",
-
     tryAgain: "Try Again",
     uploadImage: "Upload an image",
     captureImage: "Capture image",
     analysing: "Analysing...",
-
     analysisResults: "Analysis Results",
     analysisResultsSub: "විශ්ලේෂණ ප්‍රතිඵල",
-
     uncertainTitle: "Uncertain Scan Result",
     uncertainDescription:
       "This result is uncertain. Before applying chemical treatments, scan the leaf again from a closer distance under better lighting.",
-
     capturedImage: "Captured Image",
     match: "match",
-
     confidence: "Confidence",
     description: "Description",
-
     treatmentSteps: "Treatment Steps",
     chemicalTreatment: "Chemical Treatment",
     organicTreatment: "Organic Treatment",
     prevention: "Prevention",
-
     uncertainChemical:
       "Chemical recommendations are withheld for uncertain scans. Please scan again.",
-
     viewDetails: "View Full Details",
     viewDetailsSub: "සම්පූර්ණ තොරතුරු බලන්න",
-
     outbreakMap: "Check Outbreak Map",
     outbreakMapSub: "View reports within 5 kilometres",
-
     scanAgain: "Scan Again",
-
     unknownName: "Disease Not Identified",
     unknownSymptoms: "No clear symptoms were detected.",
     unknownConsult: "Consult an agriculture officer.",
     unknownTip:
       "Try scanning a plant leaf again in good lighting.",
-
     cameraError:
       "Camera access is unavailable. Upload an image instead.",
-
     locationError:
       "The scanned location could not be found. Please scan again.",
-
     speechDisease: "Detected disease",
     speechSymptoms: "Symptoms",
     speechChemical: "Chemical treatment",
@@ -179,19 +112,7 @@ const CROPS = {
     en: "Paddy",
     Icon: GiWheat,
 
-    classes: [
-      "bacterial_leaf_blight",
-      "bacterial_leaf_streak",
-      "bacterial_panicle_blight",
-      "blast",
-      "brown_spot",
-      "dead_heart",
-      "downy_mildew",
-      "hispa",
-      "normal",
-      "not_paddy",
-      "tungro",
-    ],
+    classes: [ "bacterial_leaf_blight","bacterial_leaf_streak","bacterial_panicle_blight", "blast", "brown_spot", "dead_heart", "downy_mildew", "hispa", "normal", "not_paddy", "tungro", ],
   },
 
   tomato: {
@@ -199,19 +120,7 @@ const CROPS = {
     en: "Tomato",
     Icon: GiTomato,
 
-    classes: [
-      "Tomato___Bacterial_spot",
-      "Tomato___Early_blight",
-      "Tomato___Late_blight",
-      "Tomato___Leaf_Mold",
-      "Tomato___Septoria_leaf_spot",
-      "Tomato___Spider_mites Two-spotted_spider_mite",
-      "Tomato___Target_Spot",
-      "Tomato___Tomato_Yellow_Leaf_Curl_Virus",
-      "Tomato___Tomato_mosaic_virus",
-      "Tomato___healthy",
-      "not_tomato",
-      
+    classes: [ "Tomato___Bacterial_spot","Tomato___Early_blight", "Tomato___Late_blight", "Tomato___Leaf_Mold","Tomato___Septoria_leaf_spot", "Tomato___Spider_mites Two-spotted_spider_mite", "Tomato___Target_Spot","Tomato___Tomato_Yellow_Leaf_Curl_Virus","Tomato___Tomato_mosaic_virus", "Tomato___healthy","not_tomato",  
     ],
   },
 
@@ -220,14 +129,7 @@ const CROPS = {
     en: "Chili",
     Icon: GiChiliPepper,
 
-    classes: [
-      "Bacterial Spot",
-      "Cercospora Leaf Spot",
-      "Curl Virus",
-      "Healthy Leaf",
-      "Nutrition Deficiency",
-      "White spot",
-      "not_chili",
+    classes: ["Bacterial Spot","Cercospora Leaf Spot", "Curl Virus","Healthy Leaf","Nutrition Deficiency", "White spot", "not_chili",
     ],
   },
 };
@@ -238,11 +140,8 @@ const processHighResImage = (
 ) =>
   new Promise((resolve, reject) => {
     try {
-      const temporaryCanvas =
-        document.createElement("canvas");
-
-      const temporaryContext =
-        temporaryCanvas.getContext("2d");
+      const temporaryCanvas =  document.createElement("canvas");
+      const temporaryContext =  temporaryCanvas.getContext("2d");
 
       if (!temporaryContext) {
         reject(
@@ -397,72 +296,27 @@ function LanguageToggle({
 function ScanContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-
-  const cropFromUrl =
-    searchParams.get("crop");
-
-  const {
-    model,
-    loading: modelLoading,
-    error: modelError,
-    loadModel,
-    predict,
-  } = useModel();
-
-  const initialCrop =
-    cropFromUrl && CROPS[cropFromUrl]
-      ? cropFromUrl
-      : "tomato";
-
-  const [language, setLanguage] =
-    useState("si");
-
-  const [step, setStep] =
-    useState("camera");
-
-  const [selectedCrop] =
-    useState(initialCrop);
-
-  const [
-    capturedImage,
-    setCapturedImage,
-  ] = useState(null);
-
-  const [predicting, setPredicting] =
-    useState(false);
-
-  const [result, setResult] =
-    useState(null);
-
-  const [treatment, setTreatment] =
-    useState(null);
-
-  const [
-    cameraError,
-    setCameraError,
-  ] = useState("");
-
-  const [
-    navigationError,
-    setNavigationError,
-  ] = useState("");
-
+  const cropFromUrl = searchParams.get("crop");
+  const { model, loading: modelLoading, error: modelError, loadModel, predict,} = useModel();
+  const initialCrop = cropFromUrl && CROPS[cropFromUrl]  ? cropFromUrl  : "tomato";
+  const [language, setLanguage] = useState("si");
+  const [step, setStep] = useState("camera");
+  const [selectedCrop] =  useState(initialCrop);
+  const [capturedImage, setCapturedImage,] = useState(null);
+  const [predicting, setPredicting] =useState(false);
+  const [result, setResult] =useState(null);
+  const [treatment, setTreatment] = useState(null);
+  const [cameraError,setCameraError,] = useState("");
+  const [navigationError, setNavigationError,] = useState("");
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
   const coordsRef = useRef(null);
-
   const text = scanText[language];
 
-  const apiUrl =
-    process.env.NEXT_PUBLIC_API_URL ||
-    "http://localhost:5000";
-
-  const selectedCropData =
-    CROPS[selectedCrop];
-
-  const CropIcon =
-    selectedCropData?.Icon || Wheat;
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  const selectedCropData =CROPS[selectedCrop];
+  const CropIcon = selectedCropData?.Icon || Wheat;
 
   useEffect(() => {
     try {
@@ -486,7 +340,7 @@ function ScanContent() {
   }, []);
 
   const toggleLanguage = () => {
-    const nextLanguage =
+  const nextLanguage =
       language === "si" ? "en" : "si";
 
     setLanguage(nextLanguage);
@@ -504,22 +358,11 @@ function ScanContent() {
     }
   };
 
-  /**
-   * Returns the best available [longitude, latitude] for the current scan.
-   *
-   * Priority:
-   *   1. Fresh GPS coordinates cached by the home-page permission banner.
-   *   2. The centroid of the user’s registered district.
-   *
-   * The old hardcoded fallback [80.601, 7.901] (North Central Province)
-   * has been removed — it produced misleading outbreak data.
-   */
   const getCoordinates = async () => {
-    // 1. Try the GPS cache written by the home-page location banner.
+  
     const cached = getCachedGPSCoords();
     if (cached) return cached;
 
-    // 2. Fall back to the user’s registered district centroid.
     try {
       const storedUser = JSON.parse(
         localStorage.getItem('govi_nena_user') || '{}'
@@ -668,18 +511,8 @@ function ScanContent() {
     }
   };
 
-  const createUnknownTreatment = () => ({
-    name: text.unknownName,
-    symptoms: text.unknownSymptoms,
-    chemical: text.unknownConsult,
-    organic: text.unknownConsult,
-    prevention: text.unknownTip,
-  });
-
-  const completePrediction = async (
-    prediction,
-    coordinates,
-    imageData
+  const createUnknownTreatment = () => ({name: text.unknownName,symptoms: text.unknownSymptoms,chemical: text.unknownConsult,organic: text.unknownConsult,prevention: text.unknownTip, });
+  const completePrediction = async ( prediction, coordinates, imageData
   ) => {
     if (!prediction) {
       setPredicting(false);

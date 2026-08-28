@@ -4,7 +4,7 @@ import { treatments, getTreatment } from './treatments/index';
 const TREATMENTS_KEY = 'govi_nena_treatments';
 const MODELS_KEY = 'govi_nena_models';
 
-// treatments cache කරන්න
+// treatments cache 
 export async function cacheTreatments() {
   try {
     await localforage.setItem(TREATMENTS_KEY, treatments);
@@ -16,7 +16,7 @@ export async function cacheTreatments() {
   }
 }
 
-// cached treatments ගන්න
+// cached treatments 
 export async function getCachedTreatments() {
   try {
     const cached = await localforage.getItem(TREATMENTS_KEY);
@@ -27,7 +27,7 @@ export async function getCachedTreatments() {
   }
 }
 
-// disease treatment ගන්න
+// disease treatment 
 export async function getTreatmentOffline(crop, disease, lang = 'si') {
   try {
     const cached = await localforage.getItem(TREATMENTS_KEY);
@@ -41,7 +41,7 @@ export async function getTreatmentOffline(crop, disease, lang = 'si') {
 
     return diseaseData[lang] || diseaseData['en'];
   } catch {
-    // Cache fail වුනොත් directly getTreatment() use කරනවා
+
     return getTreatment(crop, disease, lang);
   }
 }
@@ -56,7 +56,7 @@ export async function checkModelCache(cropName) {
   }
 }
 
-// cache clear කරන්න
+// cache clear 
 export async function clearCache() {
   try {
     await localforage.clear();

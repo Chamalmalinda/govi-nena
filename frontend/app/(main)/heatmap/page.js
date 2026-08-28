@@ -1,9 +1,9 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState,} from "react";
-import { AlertTriangle,  ArrowLeft, CalendarDays,  LoaderCircle, MapPin, MapPinned,Navigation,Radius,RefreshCw,} from "lucide-react";
-import { GiChiliPepper, GiTomato, GiWheat,} from "react-icons/gi";
-import {useRouter,useSearchParams,} from "next/navigation";
+import { Suspense, useEffect, useMemo, useState, } from "react";
+import { AlertTriangle, ArrowLeft, CalendarDays, LoaderCircle, MapPin, MapPinned, Navigation, Radius, RefreshCw, } from "lucide-react";
+import { GiChiliPepper, GiTomato, GiWheat, } from "react-icons/gi";
+import { useRouter, useSearchParams, } from "next/navigation";
 import { getCachedGPSCoords, getDistrictCoords, DISTRICT_CENTROIDS, getUserStorageKey } from "@/lib/location";
 
 const heatmapText = {
@@ -29,9 +29,9 @@ const heatmapText = {
     report: "වාර්තාව",
     loading: "ආසන්න වාර්තා සොයමින්...",
     locationLoading: "ස්ථානය සොයමින්...",
-    noOutbreaks:"මෙම රෝගයට අදාළ වාර්තා කිලෝමීටර් 5 ඇතුළත හමු නොවීය.",
+    noOutbreaks: "මෙම රෝගයට අදාළ වාර්තා කිලෝමීටර් 5 ඇතුළත හමු නොවීය.",
     noLocation: "ස්කෑන් කළ ස්ථානය සොයාගත නොහැක.",
-    noDisease:"ස්කෑන් කළ රෝග තොරතුරු සොයාගත නොහැක.",
+    noDisease: "ස්කෑන් කළ රෝග තොරතුරු සොයාගත නොහැක.",
     requestFailed: "රෝග වාර්තා ලබාගත නොහැකි විය.",
     retry: "නැවත උත්සාහ කරන්න",
     localOnly: "මෙහි පෙන්වන්නේ තෝරාගත් රෝගයට අදාළ කිලෝමීටර් 5 ඇතුළත වාර්තා පමණි.",
@@ -61,11 +61,11 @@ const heatmapText = {
     loading: "Searching nearby reports...",
     locationLoading: "Finding location...",
     noOutbreaks: "No reports of this disease were found within 5 kilometres.",
-    noLocation:  "The scanned location could not be found.",
+    noLocation: "The scanned location could not be found.",
     noDisease: "The scanned disease information could not be found.",
     requestFailed: "Unable to retrieve outbreak reports.",
     retry: "Try Again",
-    localOnly:  "Only reports of the selected disease within 5 kilometres are shown.",
+    localOnly: "Only reports of the selected disease within 5 kilometres are shown.",
     currentScan: "Current scan location",
   },
 };
@@ -101,26 +101,23 @@ function LanguageToggle({
       onClick={onToggle}
       aria-label={label}
       title={label}
-      className={`relative h-8 w-[72px] shrink-0 rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-white ${
-        language === "si"
-          ? "bg-[#4CAF50]"
-          : "bg-[#888888]"
-      }`}
+      className={`relative h-8 w-[72px] shrink-0 rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-white ${language === "si"
+        ? "bg-[#4CAF50]"
+        : "bg-[#888888]"
+        }`}
     >
       <span
-        className={`absolute top-[3px] h-[26px] w-[26px] rounded-full bg-white shadow-[0_1px_4px_rgba(0,0,0,0.2)] transition-all duration-300 ${
-          language === "si"
-            ? "left-[3px]"
-            : "left-[43px]"
-        }`}
+        className={`absolute top-[3px] h-[26px] w-[26px] rounded-full bg-white shadow-[0_1px_4px_rgba(0,0,0,0.2)] transition-all duration-300 ${language === "si"
+          ? "left-[3px]"
+          : "left-[43px]"
+          }`}
       />
 
       <span
-        className={`absolute top-[7px] select-none text-[10px] font-bold text-white transition-all duration-300 ${
-          language === "si"
-            ? "left-[33px]"
-            : "left-[8px]"
-        }`}
+        className={`absolute top-[7px] select-none text-[10px] font-bold text-white transition-all duration-300 ${language === "si"
+          ? "left-[33px]"
+          : "left-[8px]"
+          }`}
       >
         {language === "si" ? "සිං" : "EN"}
       </span>
@@ -162,8 +159,8 @@ function HeatmapContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [queryDetails, setQueryDetails] = useState(null);
-  const [ scanLocationName,setScanLocationName,] = useState("");
-  const [ locationLoading, setLocationLoading,] = useState(false);
+  const [scanLocationName, setScanLocationName,] = useState("");
+  const [locationLoading, setLocationLoading,] = useState(false);
   const text = heatmapText[language];
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
@@ -208,10 +205,10 @@ function HeatmapContent() {
   };
 
   const getHeatmapParameters = () => {
-    let disease =searchParams.get("disease");
-    let crop =searchParams.get("crop");
+    let disease = searchParams.get("disease");
+    let crop = searchParams.get("crop");
     let latitude = searchParams.get("lat");
-    let longitude =searchParams.get("lng");
+    let longitude = searchParams.get("lng");
 
     const radius = searchParams.get("radius") || "5";
 
@@ -288,30 +285,20 @@ function HeatmapContent() {
         "Could not restore the latest scan:",
         error
       );
-      // Ensure defaults even on errors
+
       if (!crop) crop = "paddy";
       if (!disease) disease = "blast";
     }
 
-    return {
-      disease,
-      crop,
-      latitude,
-      longitude,
-      radius,
-    };
+    return {disease,crop, latitude,longitude,radius,};
   };
 
-  const fetchScanLocationName = async (
-    latitude,
-    longitude
-  ) => {
+  const fetchScanLocationName = async (latitude,longitude) => {
     if (!latitude || !longitude) {
       setScanLocationName("");
       return;
     }
 
-    // Check if coordinates match a district centroid exactly
     const numLat = Number(latitude);
     const numLng = Number(longitude);
     const matchedDistrict = Object.keys(DISTRICT_CENTROIDS).find((key) => {
@@ -320,7 +307,7 @@ function HeatmapContent() {
     });
 
     if (matchedDistrict) {
-      // Direct match! Display the district name instead of calling geocoder API
+   
       setScanLocationName(matchedDistrict);
       return;
     }
@@ -349,7 +336,7 @@ function HeatmapContent() {
       if (!response.ok) {
         throw new Error(
           data.message ||
-            "Unable to retrieve the scan location."
+          "Unable to retrieve the scan location."
         );
       }
 
@@ -368,21 +355,9 @@ function HeatmapContent() {
     }
   };
 
-  const fetchOutbreaks = async () => {
-    setLoading(true);
-    setError("");
-    setScanLocationName("");
-
-    const parameters =
-      getHeatmapParameters();
-
-    const {
-      disease,
-      crop,
-      latitude,
-      longitude,
-      radius,
-    } = parameters;
+  const fetchOutbreaks = async () => {setLoading(true); setError(""); setScanLocationName("");
+  const parameters = getHeatmapParameters();
+  const { disease, crop, latitude, longitude, radius, } = parameters;
 
     setQueryDetails(parameters);
 
@@ -433,7 +408,7 @@ function HeatmapContent() {
       if (!response.ok) {
         throw new Error(
           data.message ||
-            text.requestFailed
+          text.requestFailed
         );
       }
 
@@ -457,7 +432,7 @@ function HeatmapContent() {
 
       setError(
         error.message ||
-          text.requestFailed
+        text.requestFailed
       );
     } finally {
       setLoading(false);
@@ -478,42 +453,51 @@ function HeatmapContent() {
     fetchOutbreaks();
   }, [searchParams, router]);
 
-  const currentCrop =queryDetails?.crop || "";
+  const currentCrop = queryDetails?.crop || "";
   const selectedCropInfo = cropInformation[currentCrop] || cropInformation.paddy;
   const CropIcon = selectedCropInfo.Icon;
-  const diseaseDisplayName = formatDiseaseName(  queryDetails?.disease);
+  const diseaseDisplayName = formatDiseaseName(queryDetails?.disease);
 
   const plottedOutbreaks = useMemo(
     () =>
       outbreaks.map((outbreak) => {
-        const coordinates =outbreak.location?.coordinates || [];
+        const coordinates = outbreak.location?.coordinates || [];
         const longitude = Number(coordinates[0]);
         const latitude = Number(coordinates[1]);
-        const centreLongitude = Number( queryDetails?.longitude );
-        const centreLatitude =Number( queryDetails?.latitude);
+        const centreLongitude = Number(queryDetails?.longitude);
+        const centreLatitude = Number(queryDetails?.latitude);
         const longitudeDifference = longitude - centreLongitude;
         const latitudeDifference = latitude - centreLatitude;
-        const xPercent = Math.max(
+        
+        let xPercent = Math.max(
           8,
           Math.min(
             92,
             50 +
-              (longitudeDifference /
-                0.09) *
-                45
+            (longitudeDifference /
+              0.09) *
+            45
           )
         );
 
-        const yPercent = Math.max(
+        let yPercent = Math.max(
           8,
           Math.min(
             92,
             50 -
-              (latitudeDifference /
-                0.09) *
-                45
+            (latitudeDifference /
+              0.09) *
+            45
           )
         );
+
+        const isAtCenter =
+          Math.abs(latitude - centreLatitude) < 0.0001 &&
+          Math.abs(longitude - centreLongitude) < 0.0001;
+        if (isAtCenter) {
+          xPercent += 5;
+          yPercent += 5;
+        }
 
         return {
           ...outbreak,
@@ -728,9 +712,8 @@ function HeatmapContent() {
                   }}
                   title={`${formatDiseaseName(
                     outbreak.disease
-                  )} - ${
-                    outbreak.confidence
-                  }%`}
+                  )} - ${outbreak.confidence
+                    }%`}
                 >
                   <div className="absolute left-1/2 top-1/2 h-7 w-7 -translate-x-1/2 -translate-y-1/2 animate-ping rounded-full bg-red-500/30" />
 
@@ -797,7 +780,7 @@ function HeatmapContent() {
           outbreaks.map((outbreak) => {
             const outbreakCropInfo =
               cropInformation[
-                outbreak.crop
+              outbreak.crop
               ] ||
               cropInformation.paddy;
 

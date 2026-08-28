@@ -2,15 +2,13 @@ const Outbreak = require('../models/Outbreak');
 const Alert = require('../models/Alert');
 const axios = require('axios');
 
-// Helper to format string properly for messages
+
 const capitalize = (str) => {
   if (!str) return '';
   return str.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 };
 
-// @route   POST /api/outbreaks
-// @desc    Log a new crop disease scan & run spread detection logic
-// @access  Public (or Private)
+
 exports.createOutbreak = async (req, res) => {
   const { disease, crop, confidence, coordinates } = req.body;
 
@@ -19,7 +17,7 @@ exports.createOutbreak = async (req, res) => {
   }
 
   try {
-    // Reverse geocode the scan coordinates to get a human-readable city/town name
+
     let locationName = 'Sri Lanka';
     try {
       const lat = coordinates[1];
@@ -52,10 +50,10 @@ exports.createOutbreak = async (req, res) => {
 
     await newOutbreak.save();
 
-    // ── Spread Detection Logic ──
+
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     
-    // Find matching cases within 5km in the past 7 days
+   
     const nearbyCases = await Outbreak.find({
       disease: newOutbreak.disease,
       timestamp: { $gte: sevenDaysAgo },
@@ -65,7 +63,7 @@ exports.createOutbreak = async (req, res) => {
             type: "Point", 
             coordinates: newOutbreak.location.coordinates 
           },
-          $maxDistance: 5000 // 5km in meters
+          $maxDistance: 5000 
         }
       }
     });
@@ -74,11 +72,11 @@ exports.createOutbreak = async (req, res) => {
     let alertCreated = false;
     let alertData = null;
 
-    // Threshold of 3 scans to alert
+  
     if (nearbyCount >= 3) {
       const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-      // Check if an alert for this disease was already created within 5km in the past 24 hours
+      
       const recentAlerts = await Alert.find({
         disease: newOutbreak.disease,
         createdAt: { $gte: twentyFourHoursAgo },
@@ -94,7 +92,7 @@ exports.createOutbreak = async (req, res) => {
       });
 
       if (recentAlerts.length === 0) {
-        // Create new Alert warning
+       
         const cropName = capitalize(crop);
         const diseaseName = capitalize(disease);
 
@@ -132,9 +130,7 @@ exports.createOutbreak = async (req, res) => {
   }
 };
 
-// @route   GET /api/outbreaks
-// @desc    Get outbreaks near a location with optional crop and disease filters
-// @access  Public
+
 exports.getOutbreaks = async (req, res) => {
   try {
     const {
@@ -145,10 +141,7 @@ exports.getOutbreaks = async (req, res) => {
       crop,
     } = req.query;
 
-    /*
-     * Latitude and longitude are required because this heatmap
-     * should show outbreaks near the scanned location.
-     */
+
     if (!lat || !lng) {
       return res.status(400).json({
         message:
@@ -192,13 +185,6 @@ exports.getOutbreaks = async (req, res) => {
       });
     }
 
-    /*
-     * Base query:
-     * Find only records within the requested radius.
-     *
-     * MongoDB requires coordinates in this order:
-     * [longitude, latitude]
-     */
     const query = {
       location: {
         $near: {
@@ -216,12 +202,7 @@ exports.getOutbreaks = async (req, res) => {
       },
     };
 
-    /*
-     * Optional crop filter.
-     *
-     * Example:
-     * /api/outbreaks?...&crop=paddy
-     */
+
     if (
       crop &&
       crop !== "all"
@@ -230,12 +211,7 @@ exports.getOutbreaks = async (req, res) => {
         crop.toLowerCase();
     }
 
-    /*
-     * Optional disease filter.
-     *
-     * Example:
-     * /api/outbreaks?...&disease=blast
-     */
+  
     if (
       disease &&
       disease !== "all"

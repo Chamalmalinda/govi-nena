@@ -24,7 +24,7 @@ const OutbreakSchema = new mongoose.Schema({
       required: true
     },
     coordinates: {
-      type: [Number], // [longitude, latitude]
+      type: [Number], 
       required: true
     }
   },
@@ -38,7 +38,7 @@ const OutbreakSchema = new mongoose.Schema({
   }
 });
 
-// Create 2dsphere index for geo-spatial queries
+
 OutbreakSchema.index({ location: '2dsphere' });
 
 module.exports = mongoose.model('Outbreak', OutbreakSchema);

@@ -1,17 +1,5 @@
 const axios = require("axios");
 
-/**
- * Converts an Open-Meteo UTC time string into a JavaScript timestamp.
- *
- * Open-Meteo may return a value such as:
- * 2026-08-03T14:00
- *
- * Because this controller requests timezone=UTC, "Z" is added so
- * JavaScript interprets the value as UTC rather than server-local time.
- *
- * @param {string | undefined | null} timeString
- * @returns {number | null}
- */
 function parseUtcTimestamp(timeString) {
   if (!timeString || typeof timeString !== "string") {
     return null;
@@ -26,19 +14,7 @@ function parseUtcTimestamp(timeString) {
   return Number.isNaN(timestamp) ? null : timestamp;
 }
 
-/**
- * Finds the hourly value whose timestamp is closest to the supplied
- * current-weather timestamp.
- *
- * @param {string[]} hourlyTimes
- * @param {number[]} hourlyValues
- * @param {string} targetTime
- * @returns {{
- *   value: number | null,
- *   time: string | null,
- *   index: number
- * }}
- */
+
 function findClosestHourlyValue(
   hourlyTimes,
   hourlyValues,
@@ -105,15 +81,6 @@ function findClosestHourlyValue(
   };
 }
 
-/**
- * Gets a readable location name from OpenStreetMap Nominatim.
- *
- * Weather retrieval should still succeed if reverse geocoding fails.
- *
- * @param {number} latitude
- * @param {number} longitude
- * @returns {Promise<string>}
- */
 async function getLocationName(
   latitude,
   longitude
@@ -141,14 +108,8 @@ async function getLocationName(
 
     const address =
       geoResponse.data?.address || {};
-
     return (
-      address.city ||
-      address.town ||
-      address.village ||
-      address.suburb ||
-      address.county ||
-      address.state ||
+      address.city || address.town || address.village || address.suburb || address.county || address.state ||
       "Sri Lanka"
     );
   } catch (error) {
@@ -161,9 +122,6 @@ async function getLocationName(
   }
 }
 
-// @route   GET /api/weather
-// @desc    Get current weather and match humidity to the nearest hourly timestamp
-// @access  Public
 exports.getWeather = async (req, res) => {
   const latitude = Number(req.query.lat);
   const longitude = Number(req.query.lng);
@@ -191,10 +149,7 @@ exports.getWeather = async (req, res) => {
   }
 
   try {
-    /*
-     * timezone=UTC ensures that current_weather.time and
-     * hourly.time use the same timezone.
-     */
+
     const weatherResponse = await axios.get(
       "https://api.open-meteo.com/v1/forecast",
       {
@@ -223,10 +178,6 @@ exports.getWeather = async (req, res) => {
       });
     }
 
-    /*
-     * Match current_weather.time to the nearest entry in
-     * hourly.time, then use the humidity at that same index.
-     */
     const humidityMatch =
       findClosestHourlyValue(
         weatherData.hourly?.time,
@@ -244,25 +195,25 @@ exports.getWeather = async (req, res) => {
     return res.status(200).json({
       temperature:
         currentWeather.temperature !== undefined &&
-        currentWeather.temperature !== null
+          currentWeather.temperature !== null
           ? `${Math.round(
-              currentWeather.temperature
-            )}°C`
+            currentWeather.temperature
+          )}°C`
           : null,
 
       windSpeed:
         currentWeather.windspeed !== undefined &&
-        currentWeather.windspeed !== null
+          currentWeather.windspeed !== null
           ? `${Math.round(
-              currentWeather.windspeed
-            )} km/h`
+            currentWeather.windspeed
+          )} km/h`
           : null,
 
       humidity:
         humidityMatch.value !== null
           ? `${Math.round(
-              humidityMatch.value
-            )}%`
+            humidityMatch.value
+          )}%`
           : null,
 
       locationName,
@@ -275,10 +226,7 @@ exports.getWeather = async (req, res) => {
         longitude,
       },
 
-      /*
-       * These values make it easy to verify that the correct
-       * hourly humidity entry was selected.
-       */
+
       currentWeatherTime:
         currentWeather.time,
 
@@ -297,7 +245,7 @@ exports.getWeather = async (req, res) => {
     console.error(
       "Weather Proxy Error:",
       error.response?.data ||
-        error.message
+      error.message
     );
 
     return res.status(500).json({

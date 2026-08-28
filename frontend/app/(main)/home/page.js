@@ -34,7 +34,6 @@ const homeText = {
     changeLanguage: "භාෂාව වෙනස් කරන්න",
     loading: "පූරණය වෙමින්...",
     userError: "පරිශීලක තොරතුරු කියවිය නොහැක.",
-    // Location permission banner
     locationBannerTitle: "ස්ථාන ප්‍රවේශය සක්‍රීය කරන්න",
     locationBannerDesc:
       "ඔබේ ගොවිතැනට ආසන්න රෝග ව්‍යාප්ති නිවැරදිව ලුහු කිරීමට GPS ස්ථානය ලබාදෙන්න.",
@@ -64,7 +63,6 @@ const homeText = {
     changeLanguage: "Change language",
     loading: "Loading...",
     userError: "Unable to read user information.",
-    // Location permission banner
     locationBannerTitle: "Enable Location Access",
     locationBannerDesc:
       "Allow GPS access to accurately track nearby crop disease outbreaks near your farm.",
@@ -127,14 +125,6 @@ export default function HomePage() {
   const [pageLoading, setPageLoading] = useState(true);
   const [pageError, setPageError] = useState("");
   const [newAlertsCount, setNewAlertsCount] = useState(0);
-  /**
-   * locationPermission tracks the in-page state of the banner.
-   * 'prompt'     → show Allow / Not Now
-   * 'requesting' → spinner on Allow button
-   * 'granted'    → show brief success tick, then hide
-   * 'denied'     → browser rejected — show settings hint
-   * 'skipped'    → user chose Not Now — hide banner
-   */
   const [locationPermission, setLocationPermission] = useState("prompt");
   const text = homeText[language];
 
@@ -159,32 +149,27 @@ export default function HomePage() {
       const parsedUser = JSON.parse(storedUser);
       setUser(parsedUser);
 
-      // ── Detect a user switch ───────────────────────────────────────────────
-      // GPS permission is stored in localStorage which is shared across
-      // all users on the same device/browser. When a different user logs
-      // in we must wipe the previous user’s GPS state so the new user
-      // is shown their own location permission prompt.
       const currentUserId = String(parsedUser._id || parsedUser.id || '');
       const lastUserId = getLastUserId();
 
       if (lastUserId && lastUserId !== currentUserId) {
-        // A different user has logged in — reset GPS state.
+  
         clearGPSState();
       }
 
-      // Always record the current user so the next login can compare.
+ 
       if (currentUserId) setLastUserId(currentUserId);
-      // ─────────────────────────────────────────────────────────────────
 
-      // Sync banner state with what we already know from localStorage.
+
+    
       const permStatus = getGPSPermissionStatus();
       if (permStatus === 'granted') {
-        // If the cache has expired, silently refresh it in the background.
+
         const cached = getCachedGPSCoords();
         if (cached) {
           setLocationPermission('granted');
         } else {
-          // Cache expired — ask the browser again silently.
+
           setLocationPermission('prompt');
         }
       } else if (permStatus === 'denied') {
@@ -215,12 +200,8 @@ export default function HomePage() {
       try {
         const token = localStorage.getItem("govi_nena_token");
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-        
-        // 1. Get user coords (GPS cache or district centroid fallback)
         const { coords } = getBestCoords(user.district);
         const [longitude, latitude] = coords;
-
-        // 2. Fetch nearby alerts (radius is 10km by default on backend)
         const response = await fetch(
           `${apiUrl}/api/alerts?lat=${latitude}&lng=${longitude}`,
           {
@@ -277,8 +258,7 @@ export default function HomePage() {
     localStorage.removeItem("govi_nena_token");
     localStorage.removeItem("govi_nena_user");
 
-    // Clear GPS state so the next user who logs in on this device
-    // is always shown their own location permission prompt.
+
     clearGPSState();
 
     showSuccess(
@@ -292,7 +272,7 @@ export default function HomePage() {
     }, 1000);
   };
 
-  /** Called when the user taps "Allow Location" on the banner. */
+
   const handleAllowLocation = () => {
     if (!navigator.geolocation) {
       setLocationPermission('denied');
@@ -312,7 +292,7 @@ export default function HomePage() {
         setGPSPermissionStatus('granted');
         setLocationPermission('granted');
 
-        // Auto-hide the success badge after 2 seconds.
+
         setTimeout(() => setLocationPermission('hidden'), 2000);
       },
       () => {
@@ -327,7 +307,6 @@ export default function HomePage() {
     );
   };
 
-  /** Called when the user taps "Not Now" on the banner. */
   const handleSkipLocation = () => {
     setGPSPermissionStatus('skipped');
     setLocationPermission('skipped');

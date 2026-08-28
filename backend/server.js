@@ -22,7 +22,7 @@ const app = express();
 // Connect to MongoDB
 connectDB();
 
-// Middleware
+
 app.use(cors());
 app.use(express.json());
 
@@ -43,7 +43,7 @@ app.use(
 
 app.use("/api/tts", ttsRoutes);
 
-// Base route
+
 app.get("/", (req, res) => {
   res.status(200).json({
     message:
@@ -51,7 +51,7 @@ app.get("/", (req, res) => {
   });
 });
 
-// Health check
+
 app.get("/health", (req, res) => {
   res.status(200).json({
     status: "UP",
@@ -60,14 +60,14 @@ app.get("/health", (req, res) => {
   });
 });
 
-// Handle unknown routes
+
 app.use((req, res) => {
   res.status(404).json({
     message: "API route not found.",
   });
 });
 
-// General error handler
+
 app.use((error, req, res, next) => {
   console.error(
     "Unhandled server error:",

@@ -6,7 +6,6 @@ const weatherController = require(
 
 const router = express.Router();
 
-// GET /api/weather?lat=...&lng=...
 router.get(
   "/",
   weatherController.getWeather

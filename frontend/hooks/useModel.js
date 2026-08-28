@@ -32,7 +32,7 @@ export function useModel() {
         .div(255.0)
         .expandDims(0);
 
-      // ── Lenient HSV Leaf Detection ─────────────────────────
+      // Lnient HSV Leaf Detection
       const imageData = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
       const pixels = imageData.data;
       let greenPixels = 0;
@@ -70,11 +70,11 @@ export function useModel() {
         const sat = s * 100;
         const val = v * 100;
 
-        // Matches lenient green tones
+       
         if (hue >= 35 && hue <= 105 && sat > 15 && val > 15) {
           greenPixels++;
         }
-        // Matches lenient yellow/brown withered/spot tones
+        
         else if (hue >= 10 && hue < 35 && sat > 24 && val > 15) {
           yellowBrownPixels++;
         }
@@ -83,14 +83,12 @@ export function useModel() {
       const greenRatio = greenPixels / totalPixels;
       const yellowBrownRatio = yellowBrownPixels / totalPixels;
 
-      // Rejects non-plant objects (laptops, plain walls, screens, shirts)
-      // by ensuring the image has at least a basic ratio of plant-like colors.
+      
       if (greenRatio < 0.05 && yellowBrownRatio < 0.08) {
         tensor.dispose();
         return { disease: 'unknown', confidence: 0, gap: 0, isUncertain: true };
       }
-      // ─────────────────────────────────────────────────────────────
-
+      
       const predictions = await model.predict(tensor);
       const probabilities = await predictions.data();
       tensor.dispose();

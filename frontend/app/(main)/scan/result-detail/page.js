@@ -251,9 +251,7 @@ function ResultDetailContent() {
   const apiUrl =process.env.NEXT_PUBLIC_API_URL ||
     "http://localhost:5000";
 
-  /*
-   * Restore selected language and captured image.
-   */
+
   useEffect(() => {
     try {
       const savedLanguage =
@@ -284,10 +282,7 @@ function ResultDetailContent() {
     }
   }, []);
 
-  /*
-   * Reload treatment information whenever the selected
-   * language changes.
-   */
+
   useEffect(() => {
     if (!crop || !diseaseName) {
       return;
@@ -313,12 +308,7 @@ function ResultDetailContent() {
     language,
   ]);
 
-  /*
-   * Retrieve current weather using the scan coordinates.
-   *
-   * The backend now matches humidity to the nearest hourly
-   * timestamp before returning it.
-   */
+
   useEffect(() => {
     const controller =
       new AbortController();
@@ -367,10 +357,6 @@ function ResultDetailContent() {
 
           setWeather(data);
 
-          /*
-           * This development log lets you verify that the
-           * humidity time is close to currentWeatherTime.
-           */
           console.log(
             "Weather timestamp match:",
             {
@@ -454,11 +440,7 @@ function ResultDetailContent() {
     return value || fallback;
   };
 
-  /*
-   * Converts a value such as "82%" into 82 and returns
-   * a suitable status instead of always displaying
-   * "High Risk".
-   */
+
   const getHumidityStatus = (
     humidityValue
   ) => {
