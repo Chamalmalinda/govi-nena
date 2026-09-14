@@ -687,11 +687,22 @@ function ScanContent() {
             );
           }
 
+          // Center-square crop to prevent aspect ratio distortion on mobile
+          const imgWidth = image.naturalWidth || image.width;
+          const imgHeight = image.naturalHeight || image.height;
+          const minDim = Math.min(imgWidth, imgHeight);
+          const startX = Math.round((imgWidth - minDim) / 2);
+          const startY = Math.round((imgHeight - minDim) / 2);
+
           canvas.width = 224;
           canvas.height = 224;
 
           context.drawImage(
             image,
+            startX,
+            startY,
+            minDim,
+            minDim,
             0,
             0,
             224,
@@ -786,11 +797,22 @@ function ScanContent() {
           );
         }
 
+        // Center-square crop from the video feed to match the viewfinder
+        const vWidth = video.videoWidth || 640;
+        const vHeight = video.videoHeight || 480;
+        const minDim = Math.min(vWidth, vHeight);
+        const startX = Math.round((vWidth - minDim) / 2);
+        const startY = Math.round((vHeight - minDim) / 2);
+
         canvas.width = 224;
         canvas.height = 224;
 
         context.drawImage(
           video,
+          startX,
+          startY,
+          minDim,
+          minDim,
           0,
           0,
           224,
