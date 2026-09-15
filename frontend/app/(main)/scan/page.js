@@ -1441,22 +1441,22 @@ function ScanContent() {
                   {text.placeLeaf}
                 </p>
 
-                <div className="relative aspect-square w-[min(78vw,60vh,500px)]">
+                <div className="relative aspect-square w-[min(78vw,52vh,420px)] h-[min(78vw,52vh,420px)] max-w-full max-h-full overflow-hidden rounded-[20px]">
                   <video
                     ref={videoRef}
                     autoPlay
                     playsInline
                     muted
-                    className="h-full w-full rounded-[20px] object-cover"
+                    className="absolute inset-0 h-full w-full object-cover"
                   />
 
-                  <span className="absolute left-0 top-0 h-9 w-9 rounded-tl-md border-l-4 border-t-4 border-[#4CAF50]" />
+                  <span className="pointer-events-none absolute left-0 top-0 z-10 h-9 w-9 rounded-tl-md border-l-4 border-t-4 border-[#4CAF50]" />
 
-                  <span className="absolute right-0 top-0 h-9 w-9 rounded-tr-md border-r-4 border-t-4 border-[#4CAF50]" />
+                  <span className="pointer-events-none absolute right-0 top-0 z-10 h-9 w-9 rounded-tr-md border-r-4 border-t-4 border-[#4CAF50]" />
 
-                  <span className="absolute bottom-0 left-0 h-9 w-9 rounded-bl-md border-b-4 border-l-4 border-[#4CAF50]" />
+                  <span className="pointer-events-none absolute bottom-0 left-0 z-10 h-9 w-9 rounded-bl-md border-b-4 border-l-4 border-[#4CAF50]" />
 
-                  <span className="absolute bottom-0 right-0 h-9 w-9 rounded-br-md border-b-4 border-r-4 border-[#4CAF50]" />
+                  <span className="pointer-events-none absolute bottom-0 right-0 z-10 h-9 w-9 rounded-br-md border-b-4 border-r-4 border-[#4CAF50]" />
                 </div>
 
                 {cameraError ? (
