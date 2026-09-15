@@ -3,16 +3,6 @@
 import { useState, useCallback } from 'react';
 import * as tf from '@tensorflow/tfjs';
 
-// Configure TensorFlow.js for Mobile Devices (Android & iOS)
-if (typeof window !== 'undefined') {
-  try {
-    // Prevent float16 precision collapse on Android GPUs (Adreno / Mali)
-    tf.env().set('WEBGL_FORCE_F16_TEXTURES', false);
-  } catch (e) {
-    console.warn('Could not set TFJS flags:', e);
-  }
-}
-
 export function useModel() {
   const [model, setModel] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -22,31 +12,14 @@ export function useModel() {
     setLoading(true);
     setError(null);
     try {
-      if (typeof window !== 'undefined') {
-        try {
-          tf.env().set('WEBGL_FORCE_F16_TEXTURES', false);
-        } catch {}
-      }
-      await tf.ready();
       const loadedModel = await tf.loadGraphModel(`/models/${cropName}/model.json`);
       setModel(loadedModel);
       setLoading(false);
       return loadedModel;
     } catch (err) {
-      console.warn('WebGL model load failed, attempting cpu backend fallback:', err);
-      try {
-        await tf.setBackend('cpu');
-        await tf.ready();
-        const loadedModel = await tf.loadGraphModel(`/models/${cropName}/model.json`);
-        setModel(loadedModel);
-        setLoading(false);
-        return loadedModel;
-      } catch (cpuErr) {
-        console.error('All model loading backends failed:', cpuErr);
-        setError('Model load failed');
-        setLoading(false);
-        return null;
-      }
+      setError('Model load failed');
+      setLoading(false);
+      return null;
     }
   }, []);
 
