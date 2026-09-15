@@ -653,112 +653,88 @@ function ScanContent() {
     setNavigationError("");
     stopCamera();
 
-    const coordinatesPromise =
-      getCoordinates();
+    try {
+      let sourceElement = null;
+      let imgWidth = 0;
+      let imgHeight = 0;
 
-    const reader = new FileReader();
-
-    reader.onload = (
-      loadEvent
-    ) => {
-      const image = new Image();
-
-      image.onload = async () => {
+      // Modern auto-orient with createImageBitmap (handles Android EXIF orientation properly)
+      if (typeof window !== "undefined" && "createImageBitmap" in window) {
         try {
-          const imageData =
-            await processHighResImage(
-              image,
-              800
-            );
-
-          setCapturedImage(
-            imageData
+          const bitmap = await createImageBitmap(file, {
+            imageOrientation: "from-image",
+          });
+          sourceElement = bitmap;
+          imgWidth = bitmap.width;
+          imgHeight = bitmap.height;
+        } catch (bitmapError) {
+          console.warn(
+            "createImageBitmap failed, falling back to Image:",
+            bitmapError
           );
-
-          const canvas =
-            canvasRef.current;
-
-          const context =
-            canvas?.getContext("2d");
-
-          if (!canvas || !context) {
-            throw new Error(
-              "Prediction canvas is unavailable."
-            );
-          }
-
-          // Center-square crop to prevent aspect ratio distortion on mobile
-          const imgWidth = image.naturalWidth || image.width;
-          const imgHeight = image.naturalHeight || image.height;
-          const minDim = Math.min(imgWidth, imgHeight);
-          const startX = Math.round((imgWidth - minDim) / 2);
-          const startY = Math.round((imgHeight - minDim) / 2);
-
-          canvas.width = 224;
-          canvas.height = 224;
-
-          context.drawImage(
-            image,
-            startX,
-            startY,
-            minDim,
-            minDim,
-            0,
-            0,
-            224,
-            224
-          );
-
-          const [
-            prediction,
-            coordinates,
-          ] = await Promise.all([
-            predict(
-              canvas,
-              selectedCrop,
-              selectedCropData.classes
-            ),
-
-            coordinatesPromise,
-          ]);
-
-          await completePrediction(
-            prediction,
-            coordinates,
-            imageData
-          );
-        } catch (error) {
-          console.error(
-            "Image prediction failed:",
-            error
-          );
-
-          setPredicting(false);
         }
-      };
+      }
 
-      image.onerror = () => {
-        console.error(
-          "The selected image could not be loaded."
-        );
+      if (!sourceElement) {
+        sourceElement = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (loadEvent) => {
+            const image = new Image();
+            image.onload = () => resolve(image);
+            image.onerror = () =>
+              reject(new Error("The selected image could not be loaded."));
+            image.src = loadEvent.target.result;
+          };
+          reader.onerror = () =>
+            reject(new Error("The selected file could not be read."));
+          reader.readAsDataURL(file);
+        });
+        imgWidth = sourceElement.naturalWidth || sourceElement.width;
+        imgHeight = sourceElement.naturalHeight || sourceElement.height;
+      }
 
-        setPredicting(false);
-      };
+      const imageData = await processHighResImage(sourceElement, 800);
+      setCapturedImage(imageData);
 
-      image.src =
-        loadEvent.target.result;
-    };
+      const canvas = canvasRef.current;
+      const context = canvas?.getContext("2d");
 
-    reader.onerror = () => {
-      console.error(
-        "The selected file could not be read."
+      if (!canvas || !context) {
+        throw new Error("Prediction canvas is unavailable.");
+      }
+
+      // Center-square crop to prevent aspect ratio distortion on mobile
+      const minDim = Math.min(imgWidth, imgHeight);
+      const startX = Math.round((imgWidth - minDim) / 2);
+      const startY = Math.round((imgHeight - minDim) / 2);
+
+      canvas.width = 224;
+      canvas.height = 224;
+
+      context.drawImage(
+        sourceElement,
+        startX,
+        startY,
+        minDim,
+        minDim,
+        0,
+        0,
+        224,
+        224
       );
 
-      setPredicting(false);
-    };
+      const [prediction, coordinates] = await Promise.all([
+        predict(canvas, selectedCrop, selectedCropData.classes),
+        coordinatesPromise,
+      ]);
 
-    reader.readAsDataURL(file);
-    event.target.value = "";
+      await completePrediction(prediction, coordinates, imageData);
+    } catch (error) {
+      console.error("Image prediction failed:", error);
+      setPredicting(false);
+    } finally {
+      event.target.value = "";
+    }
   };
 
   const captureAndPredict =
